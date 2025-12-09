@@ -51,6 +51,13 @@
             ./hosts/lenix/configuration.nix
           ];
         };
+
+        webserv = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            ./hosts/webserv/configuration.nix
+          ];
+        };
       };
     };
 }
