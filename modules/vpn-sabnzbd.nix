@@ -3,7 +3,10 @@
 
 {
   vpnNamespaces.wg.portMappings = [
-    { from = 8081; to = 8081; }
+    {
+      from = 8081;
+      to = 8081;
+    }
   ];
 
   services.sabnzbd = {

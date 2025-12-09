@@ -1,9 +1,9 @@
-# NFS media mount configuration
+# NFS tforce mount configuration
 { ... }:
 
 {
-  fileSystems."/mnt/buzz" = {
-    device = "10.0.0.160:/mnt/wdblue/buzzer";
+  fileSystems."/mnt/tforce" = {
+    device = "10.0.0.250:/mnt/tforce";
     fsType = "nfs";
     options = [
       "x-systemd.automount"

@@ -1,12 +1,12 @@
 # Common configuration shared across all hosts
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.systemd-boot.enable = lib.mkDefault true;
+  boot.loader.efi.canTouchEfiVariables = lib.mkDefault true;
 
   networking.networkmanager.enable = true;
-  networking.firewall.enable = false;
+  networking.firewall.enable = lib.mkDefault true;
 
   time.timeZone = "America/Los_Angeles";
   i18n = {
@@ -75,7 +75,7 @@
 
   programs.bash = {
     interactiveShellInit = ''
-      if [[ $(${pkgs.procps}/bin/ps --no-header --pid=$PPID --format=comm) != "fish" && -z ''${BASH_EXECUTION_STRING} ]]
+      if [[ $EUID -ne 0 && $(${pkgs.procps}/bin/ps --no-header --pid=$PPID --format=comm) != "fish" && -z ''${BASH_EXECUTION_STRING} ]]
       then
         shopt -q login_shell && LOGIN_OPTION='--login' || LOGIN_OPTION=""
         exec ${pkgs.fish}/bin/fish $LOGIN_OPTION
@@ -144,11 +144,8 @@
   services.openssh = {
     enable = true;
     settings = {
-      PasswordAuthentication = true;
-      KbdInteractiveAuthentication = true;
+      PasswordAuthentication = lib.mkDefault true;
+      KbdInteractiveAuthentication = lib.mkDefault true;
     };
   };
-
-  # System version - Do not change after initial deployment
-  system.stateVersion = "25.05";
 }

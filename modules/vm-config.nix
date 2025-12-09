@@ -8,6 +8,7 @@
 
   services.qemuGuest.enable = true;
 
-  # Automatically resize the root filesystem
+  # Automatically grow partition and resize the root filesystem
+  boot.growPartition = true;
   fileSystems."/".autoResize = true;
 }

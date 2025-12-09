@@ -4,10 +4,13 @@
 {
   vpnNamespaces.wg = {
     enable = true;
-    wireguardConfigFile = "/etc/nixos/secrets/wg.conf";
+    wireguardConfigFile = "/etc/nixos/secrets/proton.conf";
     accessibleFrom = [ "10.0.0.0/24" ];
     openVPNPorts = [
-      { port = 60434; protocol = "both"; }
+      {
+        port = 60434;
+        protocol = "both";
+      }
     ];
   };
 }
