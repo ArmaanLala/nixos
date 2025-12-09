@@ -18,5 +18,7 @@
   boot.loader.grub.device = "/dev/sda";
   boot.loader.grub.useOSProber = true;
 
+  services.tailscale.enable = true;
+
   system.stateVersion = "25.11";
 }
