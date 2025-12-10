@@ -70,6 +70,7 @@
       stylua
       fastfetch
       starship
+      zoxide
     ];
   };
 

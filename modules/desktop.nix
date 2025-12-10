@@ -7,7 +7,7 @@
 
   # Enable the KDE Plasma Desktop Environment
   services.displayManager.sddm.enable = true;
-  services.desktopManager.plasma6.enable = true;
+  # services.desktopManager.plasma6.enable = true;
   programs.niri.enable = true;
 
   # Enable CUPS to print documents
@@ -28,7 +28,7 @@
 
   # Desktop-specific user packages
   users.users.armaan.packages = with pkgs; [
-    kdePackages.kate
+    # kdePackages.kate
     ghostty
     alacritty
     btop

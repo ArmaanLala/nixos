@@ -45,7 +45,12 @@
   # Beef-specific packages
   environment.systemPackages = with pkgs; [
     zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
+    rustdesk
+    rustdesk-server
   ];
+
+  # In your NixOS or home-manager config
+  services.gnome.gnome-keyring.enable = false;
 
   system.stateVersion = "25.11";
 }
