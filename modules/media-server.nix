@@ -14,4 +14,8 @@
 
   services.prowlarr.enable = true;
   services.prowlarr.openFirewall = true;
+
+  services.bazarr.enable = true;
+  services.bazarr.openFirewall = true;
+
 }
