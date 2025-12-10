@@ -3,13 +3,17 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
+    zen-browser.url = "github:0xc000022070/zen-browser-flake";
   };
 
   outputs =
     {
       self,
       nixpkgs,
+      nixos-hardware,
+      zen-browser,
       vpn-confinement,
       ...
     }:
@@ -27,6 +31,17 @@
           system = "x86_64-linux";
           modules = [
             ./hosts/weed/configuration.nix
+          ];
+        };
+
+
+        beef = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+	  specialArgs = {
+	  	inherit zen-browser;
+	  };
+          modules = [
+            ./hosts/beef/configuration.nix
           ];
         };
 
@@ -49,6 +64,14 @@
           system = "x86_64-linux";
           modules = [
             ./hosts/webserv/configuration.nix
+          ];
+        };
+
+        thinkpad = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            nixos-hardware.nixosModules.lenovo-thinkpad-x1-yoga-7th-gen
+            ./hosts/thinkpad/configuration.nix
           ];
         };
       };
