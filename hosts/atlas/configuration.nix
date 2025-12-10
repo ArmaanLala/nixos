@@ -1,4 +1,4 @@
-# Atlas - media server (*arr stack, sabnzbd)
+# Atlas - unified media server (*arr stack, jellyfin, sabnzbd)
 { ... }:
 
 {
@@ -7,6 +7,7 @@
     ../../modules/vm-config.nix
     ../../modules/vm-hardware-config.nix
     ../../modules/media-server.nix
+    ../../modules/jellyfin.nix
     ../../modules/nfs-buzz.nix
     ../../modules/nfs-tforce.nix
     ../../modules/vpn.nix
