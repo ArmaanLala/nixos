@@ -4,12 +4,14 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
+    zen-browser.url = "github:0xc000022070/zen-browser-flake";
   };
 
   outputs =
     {
       self,
       nixpkgs,
+      zen-browser,
       vpn-confinement,
       ...
     }:
@@ -27,6 +29,17 @@
           system = "x86_64-linux";
           modules = [
             ./hosts/weed/configuration.nix
+          ];
+        };
+
+
+        beef = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+	  specialArgs = {
+	  	inherit zen-browser;
+	  };
+          modules = [
+            ./hosts/beef/configuration.nix
           ];
         };
 
