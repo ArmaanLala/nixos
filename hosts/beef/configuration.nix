@@ -6,6 +6,10 @@
     ./hardware-configuration.nix
     ../../modules/common.nix
     ../../modules/desktop.nix
+    ../../modules/steam.nix
+    ../../modules/nfs-buzz.nix
+    ../../modules/nfs-tforce.nix
+    ../../modules/nfs-immich.nix
   ];
 
   networking.hostName = "beef";
@@ -18,21 +22,24 @@
     device = "nodev";
     efiSupport = true;
     useOSProber = true;
-    theme = "${
-      (pkgs.fetchFromGitHub {
-        owner = "semimqmo";
-        repo = "sekiro_grub_theme";
-        rev = "1affe05f7257b72b69404cfc0a60e88aa19f54a6";
-        hash = "sha256-wTr5S/17uwQXkWwElqBKIV1J3QUP6W2Qx2Nw0SaM7Qk=";
-      })
-    }/Sekiro";
   };
   boot.loader.timeout = 10;
+
+  fileSystems."/mnt/nyx" = {
+    device = "/dev/disk/by-uuid/d9f321f6-b8f8-4fe4-adce-e49ed4834a52";
+    fsType = "btrfs";
+    options = [
+      "defaults"
+      "noatime"
+      "exec"
+    ];
+  };
 
   # Ollama with ROCm acceleration for AMD GPU
   services.ollama = {
     enable = true;
     acceleration = "rocm";
+    host = "[::]";
   };
 
   # Beef-specific packages

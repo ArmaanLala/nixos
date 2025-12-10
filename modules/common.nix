@@ -6,7 +6,7 @@
   boot.loader.efi.canTouchEfiVariables = lib.mkDefault true;
 
   networking.networkmanager.enable = true;
-  networking.firewall.enable = lib.mkDefault true;
+  networking.firewall.enable = lib.mkDefault false;
 
   time.timeZone = "America/Los_Angeles";
   i18n = {

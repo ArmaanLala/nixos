@@ -34,5 +34,21 @@
     btop
     claude-code
     github-cli
+    steam
+    vesktop
+    obs-studio
+    kicad
+    freecad
+
+    # Niri dependencies
+    waybar
+    walker
+    wofi
+    swaylock
+    nautilus
+    playerctl
+    brightnessctl
+    swaybg
+    xwayland-satellite
   ];
 }
