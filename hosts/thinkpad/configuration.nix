@@ -3,9 +3,9 @@
 
 {
   imports = [
+    ./hardware-configuration.nix
     ../../modules/common.nix
     ../../modules/desktop.nix
-    ./hardware-configuration.nix
   ];
 
   networking.hostName = "thinkpad";
