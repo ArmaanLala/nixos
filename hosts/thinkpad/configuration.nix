@@ -3,11 +3,14 @@
 
 {
   imports = [
-    ../../modules/common.nix
     ./hardware-configuration.nix
+    ../../modules/common.nix
+    ../../modules/desktop.nix
   ];
 
   networking.hostName = "thinkpad";
+
+  services.tailscale.enable = true;
 
   system.stateVersion = "25.11";
 }

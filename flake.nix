@@ -3,7 +3,10 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-25.11-darwin";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+    nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.11";
+    nix-darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
   };
@@ -12,7 +15,9 @@
     {
       self,
       nixpkgs,
+      nixpkgs-darwin,
       nixos-hardware,
+      nix-darwin,
       zen-browser,
       vpn-confinement,
       ...
@@ -72,6 +77,14 @@
           modules = [
             nixos-hardware.nixosModules.lenovo-thinkpad-x1-yoga-7th-gen
             ./hosts/thinkpad/configuration.nix
+          ];
+        };
+      };
+
+      darwinConfigurations = {
+        "Armaans-MacBook-Pro" = nix-darwin.lib.darwinSystem {
+          modules = [
+            ./hosts/macbook/configuration.nix
           ];
         };
       };
