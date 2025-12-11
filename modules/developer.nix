@@ -1,9 +1,10 @@
 # Developer environment - Languages and tools beyond common.nix
+# (Core tools like git, gcc, python3 are in common.nix environment.systemPackages)
 { pkgs, ... }:
 
 {
   users.users.armaan.packages = with pkgs; [
-    # Languages
+    # Programming languages
     rustup
     go
     gopls
@@ -11,8 +12,7 @@
     clang
     llvm
 
-    # Python (python3 in common.nix)
-    python3Packages.pip
+    # Python tooling (python3 interpreter + pip in systemPackages)
     uv
     ruff
 

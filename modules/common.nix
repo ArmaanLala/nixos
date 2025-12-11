@@ -70,14 +70,17 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAxWbEebtUXP/g3+lSqQxRV8j3HbDZPEfvksbBognPtz armaan@nyx 2025-12-2"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPS2foqCO+tCzjg/CYsuaTX5SsjZyEpquDjbH4WXkLwR armaan@thinkpad 2025-12-03"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGWCoSW1PMIeftP7bqfZntLdRvhGBhpvzaLFZrXTvTrp armaanlala@apple-j616c 2025-12-03"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIOlH4q2wStz0qVgW9iVvJ4v/sH13wCnQkkgFCpIVGmY 2025-12-10 armaan@beef"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOoygK39u8MDsc701vj1Vn9ow3eOtpk6kU+9UnmYrduq 2025-12-10 armaan@nix-thinkpad"
     ];
+    # User-specific packages: CLI utilities and user-facing tools
+    # (Core dev tools like git, gcc, python3 are in environment.systemPackages)
     packages = with pkgs; [
+      # CLI tools
       ripgrep
       fd
-      git
       lazygit
       neovim
-      gcc
       nil
       nixfmt-rfc-style
       tealdeer
@@ -94,12 +97,16 @@
       unzip
       rmlint
       tokei
+
+      # Shell and terminal
       fish
       tmux
-      stylua
       fastfetch
       starship
       zoxide
+
+      # Formatters
+      stylua
     ];
   };
 
@@ -161,12 +168,18 @@
     flake = "/etc/nixos";
   };
 
+  # Core system packages: root/service essentials + fundamental dev tools
   environment.systemPackages = with pkgs; [
+    # System essentials
     vim
-    python3
     nmap
     lsof
     strace
+
+    # Core development tools
+    git
+    gcc
+    python3
   ];
 
   services.avahi = {
