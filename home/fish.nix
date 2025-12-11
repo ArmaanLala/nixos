@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   isDarwin = pkgs.stdenv.isDarwin;
@@ -25,7 +30,8 @@ in
       # Add paths
       fish_add_path "$HOME/scripts"
       fish_add_path "$HOME/.local/bin"
-    '' + lib.optionalString isDarwin ''
+    ''
+    + lib.optionalString isDarwin ''
       # macOS-specific paths
       fish_add_path "$HOME/scripts/apple"
     '';
@@ -73,7 +79,8 @@ in
       nfu = "nix flake update";
       nfc = "nix flake check";
       ncg = "nh clean all --keep 3";
-    } // lib.optionalAttrs (!isDarwin) {
+    }
+    // lib.optionalAttrs (!isDarwin) {
       # Linux-specific aliases
       pman = "sudo pacman -S";
       yay = "paru";
