@@ -23,15 +23,8 @@ in
         autoSetupRemote = true;
       };
 
-      # macOS-specific credential helper
-      credential = lib.mkIf isDarwin {
-        helper = "osxkeychain";
-      };
-
-      # Linux-specific credential helper (libsecret)
-      credential = lib.mkIf (!isDarwin) {
-        helper = "libsecret";
-      };
+      # Platform-specific credential helper
+      credential.helper = if isDarwin then "osxkeychain" else "libsecret";
     };
 
     # Global gitignore (can reference your existing one)
