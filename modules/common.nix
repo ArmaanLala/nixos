@@ -2,38 +2,16 @@
 { pkgs, lib, ... }:
 
 {
+  imports = [
+    ./hosts.nix
+  ];
+
   boot.loader.systemd-boot.enable = lib.mkDefault true;
   boot.loader.efi.canTouchEfiVariables = lib.mkDefault true;
 
+  services.tailscale.enable = true;
   networking.networkmanager.enable = true;
   networking.firewall.enable = lib.mkDefault false;
-  networking.hosts = {
-    "10.0.0.30" = [ "prometheus" ];
-    "10.0.0.31" = [ "clio" ];
-    "10.0.0.32" = [ "orpheus" ];
-    "10.0.0.33" = [ "aether" ];
-    "10.0.0.69" = [ "proton" ];
-    "10.0.0.99" = [ "teapot" ];
-    "10.0.0.100" = [ "servarr" ];
-    "10.0.0.101" = [ "seagate" ];
-    "10.0.0.102" = [ "repoman" ];
-    "10.0.0.105" = [ "weed" ];
-    "10.0.0.113" = [ "thinkpad" ];
-    "10.0.0.114" = [ "thinkpad" ];
-    "10.0.0.139" = [ "photos" ];
-    "10.0.0.144" = [ "cftunnel" ];
-    "10.0.0.160" = [ "truenas" ];
-    "10.0.0.174" = [ "atlas" ];
-    "10.0.0.183" = [ "beef" ];
-    "10.0.0.186" = [ "lenix" ];
-    "10.0.0.200" = [ "hydra" ];
-    "10.0.0.201" = [ "loki" ];
-    "10.0.0.202" = [ "calliope" ];
-    "10.0.0.203" = [ "iris" ];
-    "10.0.0.222" = [ "pihole" ];
-    "10.0.0.250" = [ "alpine" ];
-    "100.103.38.71" = [ "jumpbox" ];
-  };
 
   time.timeZone = "America/Los_Angeles";
   i18n = {
@@ -69,14 +47,17 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAxWbEebtUXP/g3+lSqQxRV8j3HbDZPEfvksbBognPtz armaan@nyx 2025-12-2"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPS2foqCO+tCzjg/CYsuaTX5SsjZyEpquDjbH4WXkLwR armaan@thinkpad 2025-12-03"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGWCoSW1PMIeftP7bqfZntLdRvhGBhpvzaLFZrXTvTrp armaanlala@apple-j616c 2025-12-03"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIOlH4q2wStz0qVgW9iVvJ4v/sH13wCnQkkgFCpIVGmY 2025-12-10 armaan@beef"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOoygK39u8MDsc701vj1Vn9ow3eOtpk6kU+9UnmYrduq 2025-12-10 armaan@nix-thinkpad"
     ];
+    # User-specific packages: CLI utilities and user-facing tools
+    # (Core dev tools like git, gcc, python3 are in environment.systemPackages)
     packages = with pkgs; [
+      # CLI tools
       ripgrep
       fd
-      git
       lazygit
       neovim
-      gcc
       nil
       nixfmt-rfc-style
       tealdeer
@@ -93,12 +74,16 @@
       unzip
       rmlint
       tokei
+
+      # Shell and terminal
       fish
       tmux
-      stylua
       fastfetch
       starship
       zoxide
+
+      # Formatters
+      stylua
     ];
   };
 
@@ -160,12 +145,18 @@
     flake = "/etc/nixos";
   };
 
+  # Core system packages: root/service essentials + fundamental dev tools
   environment.systemPackages = with pkgs; [
+    # System essentials
     vim
-    python3
     nmap
     lsof
     strace
+
+    # Core development tools
+    git
+    gcc
+    python3
   ];
 
   services.avahi = {

@@ -41,7 +41,7 @@
           ];
         };
 
-        beef = nixpkgs-unstable.lib.nixosSystem {
+        beef = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
           specialArgs = {
             inherit zen-browser;

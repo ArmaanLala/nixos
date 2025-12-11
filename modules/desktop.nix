@@ -45,18 +45,29 @@
     nerd-fonts.ubuntu
   ];
 
+  # System-level desktop integration components
+  environment.systemPackages = with pkgs; [
+    polkit_gnome
+    xdg-desktop-portal-hyprland
+    xdg-desktop-portal-gtk
+    xwayland-satellite
+  ];
+
   # Desktop-specific user packages
+  # (System integration tools like polkit_gnome and xdg-desktop-portals are in environment.systemPackages)
   users.users.armaan.packages = with pkgs; [
     # Terminal emulators
     ghostty
     alacritty
 
+    # Gaming
     wineWowPackages.waylandFull
     itch
+
     # System monitoring
     btop
 
-    # Applications
+    # Desktop applications
     claude-code
     vesktop
     obs-studio
@@ -64,14 +75,15 @@
     freecad
     vlc
     ffmpeg
-
     rustdesk
     rustdesk-server
+
     # File manager
     nautilus
 
-    # Niri/Wayland dependencies
+    # Wayland compositor tools & utilities
     waybar
+    quickshell
     walker
     wofi
     fuzzel
@@ -82,13 +94,7 @@
     brightnessctl
     swaybg
     wl-clipboard
-    xwayland-satellite
     udiskie
-
-    # Wayland/desktop integration
-    polkit_gnome
-    xdg-desktop-portal-hyprland
-    xdg-desktop-portal-gtk
 
     # Audio control
     pavucontrol
