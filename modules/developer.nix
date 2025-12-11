@@ -7,7 +7,6 @@
     rustup
     go
     gopls
-    swift
     jdk
     clang
     llvm

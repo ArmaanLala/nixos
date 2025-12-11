@@ -25,9 +25,6 @@
     pulse.enable = true;
   };
 
-  # Browsers
-  programs.firefox.enable = true;
-
   # Fonts (from lala-desktop)
   fonts.packages = with pkgs; [
     dejavu_fonts

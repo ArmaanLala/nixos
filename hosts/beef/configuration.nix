@@ -36,7 +36,10 @@
     ];
   };
 
+  # AMD GPU
+  services.xserver.videoDrivers = [ "amdgpu" ];
   hardware.amdgpu.opencl.enable = true;
+
   services.tailscale.enable = true;
 
   # Ollama with ROCm acceleration for AMD GPU

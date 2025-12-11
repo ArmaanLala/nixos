@@ -74,6 +74,9 @@
 
         thinkpad = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
+          specialArgs = {
+            inherit zen-browser;
+          };
           modules = [
             nixos-hardware.nixosModules.lenovo-thinkpad-x1-yoga-7th-gen
             ./hosts/thinkpad/configuration.nix
