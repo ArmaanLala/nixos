@@ -7,10 +7,13 @@ in
   programs.git = {
     enable = true;
 
-    userName = "ArmaanLala";
-    userEmail = "armaan@armaanlala.tech";  # Update this to your actual email
+    # Use new settings format
+    settings = {
+      user = {
+        name = "ArmaanLala";
+        email = "armaan@armaanlala.tech";  # Update this to your actual email
+      };
 
-    extraConfig = {
       init = {
         defaultBranch = "main";
       };

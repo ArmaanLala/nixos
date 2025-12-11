@@ -13,6 +13,9 @@ in
 
   home.stateVersion = "25.11";
 
+  # Disable nixpkgs version check (we're using unstable for some hosts)
+  home.enableNixpkgsReleaseCheck = false;
+
   # Note: Neovim config is managed by stow (dotfiles/.config/nvim submodule)
   # We don't need to manage it here to avoid conflicts
 
