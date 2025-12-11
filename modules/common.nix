@@ -33,7 +33,17 @@
     "10.0.0.203" = [ "iris" ];
     "10.0.0.222" = [ "pihole" ];
     "10.0.0.250" = [ "alpine" ];
-    "100.103.38.71" = [ "jumpbox" ];
+    # Tailscale IPs
+    "100.76.77.32" = [ "macbook" ];
+    "100.90.169.115" = [ "ts-atlas" ];
+    "100.111.77.26" = [ "ts-beef" ];
+    "100.100.183.39" = [ "ts-desktop" ];
+    "100.106.33.35" = [ "iphone" ];
+    "100.106.156.10" = [ "ts-lenix" ];
+    "100.112.154.50" = [ "ts-nyx" ];
+    "100.87.181.8" = [ "ts-proton" ];
+    "100.103.38.71" = [ "jumpbox" "ts-tailscale" ];
+    "100.126.39.59" = [ "ts-thinkpad" ];
   };
 
   time.timeZone = "America/Los_Angeles";

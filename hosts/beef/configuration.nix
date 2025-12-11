@@ -44,6 +44,7 @@
 
   # Ollama with ROCm acceleration for AMD GPU
   services.ollama = {
+    acceleration = "rocm";
     enable = true;
     host = "[::]";
   };
@@ -51,7 +52,6 @@
   # Beef-specific packages
   environment.systemPackages = with pkgs; [
     zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
-    ollama-rocm
     hashcat
     john
     amdgpu_top
