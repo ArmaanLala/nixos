@@ -72,6 +72,7 @@
 
     # Niri/Wayland dependencies
     waybar
+    quickshell
     walker
     wofi
     fuzzel

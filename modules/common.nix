@@ -5,6 +5,7 @@
   boot.loader.systemd-boot.enable = lib.mkDefault true;
   boot.loader.efi.canTouchEfiVariables = lib.mkDefault true;
 
+  services.tailscale.enable = true;
   networking.networkmanager.enable = true;
   networking.firewall.enable = lib.mkDefault false;
   networking.hosts = {

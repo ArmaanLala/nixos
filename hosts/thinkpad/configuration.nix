@@ -12,12 +12,14 @@
 
   networking.hostName = "thinkpad";
 
-  services.tailscale.enable = true;
-
+  services.fprintd.enable = true;
+  services.fprintd.tod.enable = true;
+  # services.fprintd.tod.driver = pkgs.libfprint-2-tod1-vfs0090;
+  services.fprintd.tod.driver = pkgs.libfprint-2-tod1-goodix;
   # Thinkpad-specific packages
   environment.systemPackages = with pkgs; [
     zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
-    walker
+    thinkfan
   ];
 
   system.stateVersion = "25.11";
