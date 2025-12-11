@@ -18,7 +18,6 @@
   environment.systemPackages = with pkgs; [
     zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
     walker
-    elephant
   ];
 
   system.stateVersion = "25.11";
