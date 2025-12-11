@@ -55,6 +55,7 @@
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
+              home-manager.backupFileExtension = "hm-backup";
               home-manager.users.armaan = import ./home;
             }
           ];
@@ -94,6 +95,7 @@
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
+              home-manager.backupFileExtension = "hm-backup";
               home-manager.users.armaan = import ./home;
             }
           ];
