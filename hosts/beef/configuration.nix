@@ -45,13 +45,13 @@
   # Ollama with ROCm acceleration for AMD GPU
   services.ollama = {
     enable = true;
-    acceleration = "rocm";
     host = "[::]";
   };
 
   # Beef-specific packages
   environment.systemPackages = with pkgs; [
     zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
+    ollama-rocm
     rustdesk
     rustdesk-server
     hashcat

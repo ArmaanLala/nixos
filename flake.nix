@@ -41,12 +41,11 @@
           ];
         };
 
-
         beef = nixpkgs-unstable.lib.nixosSystem {
           system = "x86_64-linux";
-	  specialArgs = {
-	  	inherit zen-browser;
-	  };
+          specialArgs = {
+            inherit zen-browser;
+          };
           modules = [
             ./hosts/beef/configuration.nix
           ];
