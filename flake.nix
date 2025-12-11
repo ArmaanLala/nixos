@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-25.11-darwin";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.11";
@@ -15,6 +16,7 @@
     {
       self,
       nixpkgs,
+      nixpkgs-unstable,
       nixpkgs-darwin,
       nixos-hardware,
       nix-darwin,
@@ -39,12 +41,11 @@
           ];
         };
 
-
-        beef = nixpkgs.lib.nixosSystem {
+        beef = nixpkgs-unstable.lib.nixosSystem {
           system = "x86_64-linux";
-	  specialArgs = {
-	  	inherit zen-browser;
-	  };
+          specialArgs = {
+            inherit zen-browser;
+          };
           modules = [
             ./hosts/beef/configuration.nix
           ];

@@ -51,6 +51,8 @@
     ghostty
     alacritty
 
+    wineWowPackages.waylandFull
+    itch
     # System monitoring
     btop
 
@@ -63,6 +65,8 @@
     vlc
     ffmpeg
 
+    rustdesk
+    rustdesk-server
     # File manager
     nautilus
 
