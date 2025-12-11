@@ -6,6 +6,7 @@
     ./hardware-configuration.nix
     ../../modules/common.nix
     ../../modules/desktop.nix
+    ../../modules/developer.nix
     ../../modules/steam.nix
     ../../modules/nfs-buzz.nix
     ../../modules/nfs-tforce.nix
@@ -35,6 +36,12 @@
     ];
   };
 
+  # AMD GPU
+  services.xserver.videoDrivers = [ "amdgpu" ];
+  hardware.amdgpu.opencl.enable = true;
+
+  services.tailscale.enable = true;
+
   # Ollama with ROCm acceleration for AMD GPU
   services.ollama = {
     enable = true;
@@ -47,6 +54,9 @@
     zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
     rustdesk
     rustdesk-server
+    hashcat
+    john
+    amdgpu_top
   ];
 
   # In your NixOS or home-manager config
