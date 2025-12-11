@@ -8,6 +8,8 @@
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.11";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
+    home-manager.url = "github:nix-community/home-manager/release-25.11";
+    home-manager.inputs.nixpkgs.follows = "nixpkgs";
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
   };
@@ -20,6 +22,7 @@
       nixpkgs-darwin,
       nixos-hardware,
       nix-darwin,
+      home-manager,
       zen-browser,
       vpn-confinement,
       ...
@@ -48,6 +51,12 @@
           };
           modules = [
             ./hosts/beef/configuration.nix
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.armaan = import ./home;
+            }
           ];
         };
 
@@ -81,6 +90,12 @@
           modules = [
             nixos-hardware.nixosModules.lenovo-thinkpad-x1-yoga-7th-gen
             ./hosts/thinkpad/configuration.nix
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.armaan = import ./home;
+            }
           ];
         };
       };
@@ -89,6 +104,12 @@
         "Armaans-MacBook-Pro" = nix-darwin.lib.darwinSystem {
           modules = [
             ./hosts/macbook/configuration.nix
+            home-manager.darwinModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.armaan = import ./home;
+            }
           ];
         };
       };
