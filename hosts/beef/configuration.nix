@@ -35,6 +35,9 @@
     ];
   };
 
+  hardware.amdgpu.opencl.enable = true;
+  services.tailscale.enable = true;
+
   # Ollama with ROCm acceleration for AMD GPU
   services.ollama = {
     enable = true;
@@ -47,6 +50,8 @@
     zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
     rustdesk
     rustdesk-server
+    hashcat
+    john
   ];
 
   # In your NixOS or home-manager config
