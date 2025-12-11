@@ -6,6 +6,7 @@
     ./hardware-configuration.nix
     ../../modules/common.nix
     ../../modules/desktop.nix
+    ../../modules/developer.nix
   ];
 
   networking.hostName = "thinkpad";

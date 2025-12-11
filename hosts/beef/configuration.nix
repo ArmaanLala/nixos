@@ -6,6 +6,7 @@
     ./hardware-configuration.nix
     ../../modules/common.nix
     ../../modules/desktop.nix
+    ../../modules/developer.nix
     ../../modules/steam.nix
     ../../modules/nfs-buzz.nix
     ../../modules/nfs-tforce.nix
@@ -52,6 +53,7 @@
     rustdesk-server
     hashcat
     john
+    amdgpu_top
   ];
 
   # In your NixOS or home-manager config

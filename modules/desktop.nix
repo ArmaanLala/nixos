@@ -1,14 +1,16 @@
-# Desktop environment configuration (KDE Plasma, Niri, audio, printing)
-{ pkgs, ... }:
+# Desktop environment configuration (Niri/Hyprland, audio, printing, fonts)
+{ pkgs, lib, ... }:
 
 {
-  # Enable the X11 windowing system
+  # Enable the X11 windowing system (for XWayland support)
   services.xserver.enable = true;
 
-  # Enable the KDE Plasma Desktop Environment
+  # Display manager
   services.displayManager.sddm.enable = true;
-  # services.desktopManager.plasma6.enable = true;
+
+  # Wayland compositors
   programs.niri.enable = true;
+  programs.hyprland.enable = lib.mkDefault false;
 
   # Enable CUPS to print documents
   services.printing.enable = true;
@@ -23,32 +25,74 @@
     pulse.enable = true;
   };
 
-  # Install firefox
+  # Browsers
   programs.firefox.enable = true;
+
+  # Fonts (from lala-desktop)
+  fonts.packages = with pkgs; [
+    dejavu_fonts
+    liberation_ttf
+    jetbrains-mono
+    nerd-fonts.jetbrains-mono
+    fira-code
+    nerd-fonts.symbols-only
+    noto-fonts
+    noto-fonts-color-emoji
+    font-awesome
+    ubuntu-classic
+    hack-font
+    roboto
+    roboto-mono
+    ibm-plex
+    open-sans
+    nerd-fonts.ubuntu
+  ];
 
   # Desktop-specific user packages
   users.users.armaan.packages = with pkgs; [
-    # kdePackages.kate
+    # Terminal emulators
     ghostty
     alacritty
+
+    # System monitoring
     btop
+
+    # Applications
     claude-code
-    github-cli
-    steam
     vesktop
     obs-studio
     kicad
     freecad
+    vlc
+    ffmpeg
 
-    # Niri dependencies
+    # File manager
+    nautilus
+
+    # Niri/Wayland dependencies
     waybar
     walker
     wofi
+    fuzzel
     swaylock
-    nautilus
+    mako
+    dunst
     playerctl
     brightnessctl
     swaybg
+    wl-clipboard
     xwayland-satellite
+    udiskie
+
+    # Wayland/desktop integration
+    polkit_gnome
+    xdg-desktop-portal-hyprland
+    xdg-desktop-portal-gtk
+
+    # Audio control
+    pavucontrol
   ];
+
+  # Polkit agent for authentication dialogs
+  security.polkit.enable = true;
 }

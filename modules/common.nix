@@ -116,6 +116,15 @@
 
   environment.variables.EDITOR = "nvim";
 
+  programs.git = {
+    enable = true;
+    config = {
+      credential.helper = "!gh auth git-credential";
+      user.name = "Armaan Lala";
+      user.email = "armaanlala@gmail.com";
+    };
+  };
+
   programs.nh = {
     enable = true;
     clean.enable = true;
