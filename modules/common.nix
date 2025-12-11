@@ -59,6 +59,7 @@
       wget
       parallel
       bat
+      bat-extras.batman
       eza
       mediainfo
       zip
