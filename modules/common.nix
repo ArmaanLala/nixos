@@ -7,6 +7,33 @@
 
   networking.networkmanager.enable = true;
   networking.firewall.enable = lib.mkDefault false;
+  networking.hosts = {
+    "10.0.0.30" = [ "prometheus" ];
+    "10.0.0.31" = [ "clio" ];
+    "10.0.0.32" = [ "orpheus" ];
+    "10.0.0.33" = [ "aether" ];
+    "10.0.0.69" = [ "proton" ];
+    "10.0.0.99" = [ "teapot" ];
+    "10.0.0.100" = [ "servarr" ];
+    "10.0.0.101" = [ "seagate" ];
+    "10.0.0.102" = [ "repoman" ];
+    "10.0.0.105" = [ "weed" ];
+    "10.0.0.113" = [ "thinkpad" ];
+    "10.0.0.114" = [ "thinkpad" ];
+    "10.0.0.139" = [ "photos" ];
+    "10.0.0.144" = [ "cftunnel" ];
+    "10.0.0.160" = [ "truenas" ];
+    "10.0.0.174" = [ "atlas" ];
+    "10.0.0.183" = [ "beef" ];
+    "10.0.0.186" = [ "lenix" ];
+    "10.0.0.200" = [ "hydra" ];
+    "10.0.0.201" = [ "loki" ];
+    "10.0.0.202" = [ "calliope" ];
+    "10.0.0.203" = [ "iris" ];
+    "10.0.0.222" = [ "pihole" ];
+    "10.0.0.250" = [ "alpine" ];
+    "100.103.38.71" = [ "jumpbox" ];
+  };
 
   time.timeZone = "America/Los_Angeles";
   i18n = {

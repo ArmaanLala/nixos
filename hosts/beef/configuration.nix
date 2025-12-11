@@ -52,8 +52,6 @@
   environment.systemPackages = with pkgs; [
     zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
     ollama-rocm
-    rustdesk
-    rustdesk-server
     hashcat
     john
     amdgpu_top
