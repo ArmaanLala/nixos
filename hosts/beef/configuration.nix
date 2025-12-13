@@ -8,6 +8,7 @@
     ../../modules/desktop.nix
     ../../modules/developer.nix
     ../../modules/steam.nix
+    ../../modules/stylix.nix
     ../../modules/nfs-buzz.nix
     ../../modules/nfs-tforce.nix
     ../../modules/nfs-immich.nix

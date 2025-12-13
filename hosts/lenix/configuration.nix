@@ -4,6 +4,7 @@
 {
   imports = [
     ../../modules/common.nix
+    ../../modules/auto-upgrade.nix
     ../../modules/immich.nix
     ../../modules/nfs-immich.nix
     ./hardware-configuration.nix

@@ -64,6 +64,9 @@
     wineWowPackages.waylandFull
     itch
 
+    localsend
+    caligula
+
     # System monitoring
     btop
 

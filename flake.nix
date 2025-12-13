@@ -10,6 +10,7 @@
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
+    stylix.url = "github:danth/stylix/release-25.11";
   };
 
   outputs =
@@ -22,6 +23,7 @@
       nix-darwin,
       zen-browser,
       vpn-confinement,
+      stylix,
       ...
     }:
     {
@@ -34,19 +36,13 @@
           ];
         };
 
-        weed = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          modules = [
-            ./hosts/weed/configuration.nix
-          ];
-        };
-
         beef = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
           specialArgs = {
             inherit zen-browser;
           };
           modules = [
+            stylix.nixosModules.stylix
             ./hosts/beef/configuration.nix
           ];
         };
@@ -79,6 +75,7 @@
             inherit zen-browser;
           };
           modules = [
+            stylix.nixosModules.stylix
             nixos-hardware.nixosModules.lenovo-thinkpad-x1-yoga-7th-gen
             ./hosts/thinkpad/configuration.nix
           ];

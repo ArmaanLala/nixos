@@ -8,9 +8,11 @@
     ../../modules/desktop.nix
     ../../modules/developer.nix
     ../../modules/steam.nix
+    ../../modules/stylix.nix
   ];
 
   networking.hostName = "thinkpad";
+  time.timeZone = "America/New_York";
 
   services.fprintd.enable = true;
   services.fprintd.tod.enable = true;
