@@ -34,13 +34,6 @@
           ];
         };
 
-        weed = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          modules = [
-            ./hosts/weed/configuration.nix
-          ];
-        };
-
         beef = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
           specialArgs = {
