@@ -1,5 +1,10 @@
 # Beef - Desktop workstation with AMD GPU and Ollama
-{ pkgs, zen-browser, ... }:
+{
+  pkgs,
+  zen-browser,
+  colmena,
+  ...
+}:
 
 {
   imports = [
@@ -14,8 +19,8 @@
 
   nfsMounts = {
     "/mnt/buzz" = "10.0.0.160:/mnt/wdblue/buzzer";
-    "/mnt/tforce" = "10.0.0.250:/mnt/tforce";
     "/mnt/immich" = "10.0.0.160:/mnt/wdblue/immich";
+    "/mnt/media" = "10.0.0.160:/mnt/wdblue/arr";
   };
 
   networking.hostName = "beef";
@@ -50,8 +55,18 @@
   # Ollama with ROCm acceleration for AMD GPU
   services.ollama = {
     acceleration = "rocm";
+    package = pkgs.ollama-rocm; # Use ROCm-enabled version
     enable = true;
     host = "[::]";
+  };
+
+  hardware.opengl = {
+    enable = true;
+    extraPackages = with pkgs; [
+      rocmPackages.clr.icd
+      rocmPackages.rocm-runtime
+      rocmPackages.rocblas
+    ];
   };
 
   # Beef-specific packages

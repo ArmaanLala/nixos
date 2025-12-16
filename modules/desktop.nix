@@ -1,5 +1,10 @@
 # Desktop environment configuration (Niri/Hyprland, audio, printing, fonts)
-{ pkgs, lib, ... }:
+{
+  pkgs,
+  lib,
+  colmena,
+  ...
+}:
 
 {
   # Enable the X11 windowing system (for XWayland support)
@@ -59,6 +64,7 @@
     # Terminal emulators
     ghostty
     alacritty
+    colmena.packages.x86_64-linux.colmena
 
     # Gaming
     wineWowPackages.waylandFull

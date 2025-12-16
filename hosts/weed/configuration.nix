@@ -7,7 +7,6 @@
     ../../modules/auto-upgrade.nix
     ../../modules/vm-config.nix
     ../../modules/vm-hardware-config.nix
-    ../../modules/nfs-tforce.nix
     ../../modules/jellyfin.nix
   ];
 

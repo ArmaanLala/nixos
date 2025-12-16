@@ -45,7 +45,7 @@
         beef = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
           specialArgs = {
-            inherit zen-browser;
+            inherit zen-browser colmena;
           };
           modules = [
             stylix.nixosModules.stylix
@@ -78,7 +78,7 @@
         thinkpad = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
           specialArgs = {
-            inherit zen-browser;
+            inherit zen-browser colmena;
           };
           modules = [
             stylix.nixosModules.stylix
@@ -100,7 +100,7 @@
         meta = {
           nixpkgs = import nixpkgs { system = "x86_64-linux"; };
           specialArgs = {
-            inherit zen-browser;
+            inherit zen-browser colmena;
           };
         };
 
@@ -161,5 +161,22 @@
           treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
         in
         treefmtEval.config.build.wrapper;
+
+      # Dev shell with the correct colmena version
+      devShells.x86_64-linux.default =
+        let
+          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        in
+        pkgs.mkShell {
+          packages = [
+            colmena.packages.x86_64-linux.colmena
+          ];
+        };
+
+      # Allow running colmena directly: nix run .#colmena -- apply
+      apps.x86_64-linux.colmena = {
+        type = "app";
+        program = "${colmena.packages.x86_64-linux.colmena}/bin/colmena";
+      };
     };
 }

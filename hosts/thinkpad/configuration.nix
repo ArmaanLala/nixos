@@ -1,5 +1,10 @@
 # Thinkpad - Lenovo ThinkPad X1 Yoga 7th Gen
-{ pkgs, zen-browser, ... }:
+{
+  pkgs,
+  zen-browser,
+  colmena,
+  ...
+}:
 
 {
   imports = [
@@ -9,8 +14,13 @@
     ../../modules/developer.nix
     ../../modules/steam.nix
     ../../modules/stylix.nix
+    # ../../modules/nfs.nix
   ];
 
+  # nfsMounts = {
+  #   "/mnt/media" = "ts-truenash:/mnt/wdblue/arr";
+  # };
+  #
   networking.hostName = "thinkpad";
   time.timeZone = "America/New_York";
 

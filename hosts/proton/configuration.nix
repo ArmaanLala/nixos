@@ -17,7 +17,6 @@
 
   nfsMounts = {
     "/mnt/buzz" = "10.0.0.160:/mnt/wdblue/buzzer";
-    "/mnt/tforce" = "10.0.0.250:/mnt/tforce";
   };
 
   system.stateVersion = "25.05";
