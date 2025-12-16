@@ -9,10 +9,14 @@
     ../../modules/developer.nix
     ../../modules/steam.nix
     ../../modules/stylix.nix
-    ../../modules/nfs-buzz.nix
-    ../../modules/nfs-tforce.nix
-    ../../modules/nfs-immich.nix
+    ../../modules/nfs.nix
   ];
+
+  nfsMounts = {
+    "/mnt/buzz" = "10.0.0.160:/mnt/wdblue/buzzer";
+    "/mnt/tforce" = "10.0.0.250:/mnt/tforce";
+    "/mnt/immich" = "10.0.0.160:/mnt/wdblue/immich";
+  };
 
   networking.hostName = "beef";
 

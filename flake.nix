@@ -11,6 +11,10 @@
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
     stylix.url = "github:danth/stylix/release-25.11";
+    colmena.url = "github:zhaofengli/colmena";
+    colmena.inputs.nixpkgs.follows = "nixpkgs";
+    treefmt-nix.url = "github:numtide/treefmt-nix";
+    treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
@@ -24,6 +28,8 @@
       zen-browser,
       vpn-confinement,
       stylix,
+      colmena,
+      treefmt-nix,
       ...
     }:
     {
@@ -89,5 +95,71 @@
           ];
         };
       };
+
+      colmenaHive = colmena.lib.makeHive {
+        meta = {
+          nixpkgs = import nixpkgs { system = "x86_64-linux"; };
+          specialArgs = {
+            inherit zen-browser;
+          };
+        };
+
+        defaults =
+          { ... }:
+          {
+            imports = [ ./modules/common.nix ];
+            deployment.targetUser = "armaan";
+          };
+
+        atlas = {
+          imports = [
+            vpn-confinement.nixosModules.default
+            ./hosts/atlas/configuration.nix
+          ];
+          deployment.targetHost = "ts-atlas";
+        };
+
+        beef = {
+          imports = [
+            stylix.nixosModules.stylix
+            ./hosts/beef/configuration.nix
+          ];
+          deployment.targetHost = "ts-beef";
+        };
+
+        proton = {
+          imports = [
+            vpn-confinement.nixosModules.default
+            ./hosts/proton/configuration.nix
+          ];
+          deployment.targetHost = "ts-proton";
+        };
+
+        lenix = {
+          imports = [ ./hosts/lenix/configuration.nix ];
+          deployment.targetHost = "ts-lenix";
+        };
+
+        webserv = {
+          imports = [ ./hosts/webserv/configuration.nix ];
+          deployment.targetHost = "ts-web";
+        };
+
+        thinkpad = {
+          imports = [
+            stylix.nixosModules.stylix
+            nixos-hardware.nixosModules.lenovo-thinkpad-x1-yoga-7th-gen
+            ./hosts/thinkpad/configuration.nix
+          ];
+          deployment.targetHost = "ts-thinkpad";
+        };
+      };
+
+      formatter.x86_64-linux =
+        let
+          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
+        in
+        treefmtEval.config.build.wrapper;
     };
 }

@@ -22,5 +22,15 @@
     # Data processing
     jq
     yq
+
+    # Formatters (for editor integration and direct use)
+    treefmt
+    rustfmt
+    clang-tools # includes clang-format
+    stylua
+    shfmt
+    taplo
+    yamlfmt
+    nodePackages.prettier
   ];
 }

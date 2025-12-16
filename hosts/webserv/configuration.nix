@@ -10,14 +10,13 @@
   ];
 
   networking.hostName = "webserv";
-  services.open-webui.enable = true;
 
   services.open-webui = {
     enable = true;
-    host = "0.0.0.0"; # Bind to all interfaces
+    host = "0.0.0.0";
     port = 8080;
     environment = {
-      OLLAMA_BASE_URL = "http://127.0.0.1:11434"; # Point to local Ollama
+      OLLAMA_BASE_URL = "http://beef:11434";
     };
   };
 

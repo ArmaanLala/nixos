@@ -11,7 +11,7 @@
 
   services.tailscale.enable = true;
   networking.networkmanager.enable = true;
-  networking.firewall.enable = lib.mkDefault false;
+  networking.firewall.enable = lib.mkDefault true;
 
   time.timeZone = lib.mkDefault "America/Los_Angeles";
   i18n = {
@@ -179,5 +179,4 @@
     };
   };
 
-  programs.ssh.extraConfig = builtins.readFile ../ssh-config;
 }

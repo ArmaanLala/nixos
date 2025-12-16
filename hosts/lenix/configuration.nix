@@ -6,11 +6,15 @@
     ../../modules/common.nix
     ../../modules/auto-upgrade.nix
     ../../modules/immich.nix
-    ../../modules/nfs-immich.nix
+    ../../modules/nfs.nix
     ./hardware-configuration.nix
   ];
 
   networking.hostName = "lenix";
+
+  nfsMounts = {
+    "/mnt/immich" = "10.0.0.160:/mnt/wdblue/immich";
+  };
 
   # Override common.nix bootloader - lenix uses GRUB on /dev/sda
   boot.loader.systemd-boot.enable = false;
