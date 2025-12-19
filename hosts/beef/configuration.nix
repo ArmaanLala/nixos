@@ -1,24 +1,17 @@
 # Beef - Desktop workstation with AMD GPU and Ollama
-{
-  pkgs,
-  zen-browser,
-  colmena,
-  ...
-}:
+{ pkgs, ... }:
 
 {
   imports = [
     ./hardware-configuration.nix
     ../../modules/common.nix
-    ../../modules/desktop.nix
-    ../../modules/developer.nix
-    ../../modules/steam.nix
-    ../../modules/stylix.nix
+    ../../modules/roles/desktop-workstation.nix
     ../../modules/nfs.nix
   ];
 
   nfsMounts = {
     "/mnt/buzz" = "10.0.0.160:/mnt/wdblue/buzzer";
+    "/mnt/games" = "10.0.0.160:/mnt/wdblue/games";
     "/mnt/immich" = "10.0.0.160:/mnt/wdblue/immich";
     "/mnt/media" = "10.0.0.160:/mnt/wdblue/arr";
   };
@@ -50,17 +43,15 @@
   services.xserver.videoDrivers = [ "amdgpu" ];
   hardware.amdgpu.opencl.enable = true;
 
-  services.tailscale.enable = true;
-
   # Ollama with ROCm acceleration for AMD GPU
   services.ollama = {
     acceleration = "rocm";
-    package = pkgs.ollama-rocm; # Use ROCm-enabled version
+    package = pkgs.ollama-rocm;
     enable = true;
     host = "[::]";
   };
 
-  hardware.opengl = {
+  hardware.graphics = {
     enable = true;
     extraPackages = with pkgs; [
       rocmPackages.clr.icd
@@ -71,13 +62,12 @@
 
   # Beef-specific packages
   environment.systemPackages = with pkgs; [
-    zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
+    firefox
     hashcat
     john
     amdgpu_top
   ];
 
-  # In your NixOS or home-manager config
   services.gnome.gnome-keyring.enable = false;
 
   system.stateVersion = "25.11";

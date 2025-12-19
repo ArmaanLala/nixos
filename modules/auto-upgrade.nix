@@ -29,13 +29,6 @@
     ${pkgs.git}/bin/git pull --ff-only || true
   '';
 
-  # Garbage collection - clean up old generations
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 30d";
-  };
-
-  # Keep the store optimized
+  # Keep the store optimized (gc handled by nh in common.nix)
   nix.settings.auto-optimise-store = true;
 }

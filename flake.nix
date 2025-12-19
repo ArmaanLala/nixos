@@ -9,7 +9,6 @@
     nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.11";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
-    zen-browser.url = "github:0xc000022070/zen-browser-flake";
     stylix.url = "github:danth/stylix/release-25.11";
     colmena.url = "github:zhaofengli/colmena";
     colmena.inputs.nixpkgs.follows = "nixpkgs";
@@ -25,155 +24,115 @@
       nixpkgs-darwin,
       nixos-hardware,
       nix-darwin,
-      zen-browser,
       vpn-confinement,
       stylix,
       colmena,
       treefmt-nix,
       ...
     }:
-    {
-      nixosConfigurations = {
-        atlas = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          modules = [
-            vpn-confinement.nixosModules.default
-            ./hosts/atlas/configuration.nix
-          ];
-        };
-
-        beef = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          specialArgs = {
-            inherit zen-browser colmena;
-          };
-          modules = [
-            stylix.nixosModules.stylix
-            ./hosts/beef/configuration.nix
-          ];
-        };
-
-        proton = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          modules = [
-            vpn-confinement.nixosModules.default
-            ./hosts/proton/configuration.nix
-          ];
-        };
-
-        lenix = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          modules = [
-            ./hosts/lenix/configuration.nix
-          ];
-        };
-
-        webserv = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          modules = [
-            ./hosts/webserv/configuration.nix
-          ];
-        };
-
-        thinkpad = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          specialArgs = {
-            inherit zen-browser colmena;
-          };
-          modules = [
-            stylix.nixosModules.stylix
-            nixos-hardware.nixosModules.lenovo-thinkpad-x1-yoga-7th-gen
-            ./hosts/thinkpad/configuration.nix
-          ];
-        };
-      };
-
-      darwinConfigurations = {
-        "Armaans-MacBook-Pro" = nix-darwin.lib.darwinSystem {
-          modules = [
-            ./hosts/macbook/configuration.nix
-          ];
-        };
-      };
-
-      colmenaHive = colmena.lib.makeHive {
-        meta = {
-          nixpkgs = import nixpkgs { system = "x86_64-linux"; };
-          specialArgs = {
-            inherit zen-browser colmena;
-          };
-        };
-
-        defaults =
-          { ... }:
-          {
-            imports = [ ./modules/common.nix ];
-            deployment.targetUser = "armaan";
-          };
-
+    let
+      # Single source of truth for host configurations
+      hosts = {
         atlas = {
-          imports = [
+          modules = [
             vpn-confinement.nixosModules.default
             ./hosts/atlas/configuration.nix
           ];
-          deployment.targetHost = "ts-atlas";
+          targetHost = "ts-atlas";
         };
 
         beef = {
-          imports = [
+          modules = [
             stylix.nixosModules.stylix
             ./hosts/beef/configuration.nix
           ];
-          deployment.targetHost = "ts-beef";
+          targetHost = "ts-beef";
         };
 
         proton = {
-          imports = [
+          modules = [
             vpn-confinement.nixosModules.default
             ./hosts/proton/configuration.nix
           ];
-          deployment.targetHost = "ts-proton";
+          targetHost = "ts-proton";
         };
 
         lenix = {
-          imports = [ ./hosts/lenix/configuration.nix ];
-          deployment.targetHost = "ts-lenix";
+          modules = [ ./hosts/lenix/configuration.nix ];
+          targetHost = "ts-lenix";
         };
 
         webserv = {
-          imports = [ ./hosts/webserv/configuration.nix ];
-          deployment.targetHost = "ts-web";
+          modules = [ ./hosts/webserv/configuration.nix ];
+          targetHost = "ts-web";
         };
 
         thinkpad = {
-          imports = [
+          modules = [
             stylix.nixosModules.stylix
             nixos-hardware.nixosModules.lenovo-thinkpad-x1-yoga-7th-gen
             ./hosts/thinkpad/configuration.nix
           ];
-          deployment.targetHost = "ts-thinkpad";
+          targetHost = "ts-thinkpad";
         };
       };
+
+      # Generate nixosConfigurations from hosts
+      mkNixosConfig =
+        name: cfg:
+        nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = { inherit colmena; };
+          modules = cfg.modules;
+        };
+
+      # Generate colmena node from hosts
+      mkColmenaNode = name: cfg: {
+        imports = cfg.modules;
+        deployment.targetHost = cfg.targetHost;
+      };
+    in
+    {
+      nixosConfigurations = builtins.mapAttrs mkNixosConfig hosts;
+
+      darwinConfigurations = {
+        "Armaans-MacBook-Pro" = nix-darwin.lib.darwinSystem {
+          modules = [ ./hosts/macbook/configuration.nix ];
+        };
+      };
+
+      colmenaHive = colmena.lib.makeHive (
+        {
+          meta = {
+            nixpkgs = import nixpkgs { system = "x86_64-linux"; };
+            specialArgs = { inherit colmena; };
+          };
+
+          defaults =
+            { ... }:
+            {
+              imports = [ ./modules/common.nix ];
+              deployment.targetUser = "armaan";
+            };
+        }
+        // builtins.mapAttrs mkColmenaNode hosts
+      );
 
       formatter.x86_64-linux =
         let
           pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
+          treefmtEval = treefmt-nix.lib.evalModule pkgs ./lib/treefmt.nix;
         in
         treefmtEval.config.build.wrapper;
 
-      # Dev shell with the correct colmena version
       devShells.x86_64-linux.default =
         let
           pkgs = nixpkgs.legacyPackages.x86_64-linux;
         in
         pkgs.mkShell {
-          packages = [
-            colmena.packages.x86_64-linux.colmena
-          ];
+          packages = [ colmena.packages.x86_64-linux.colmena ];
         };
 
-      # Allow running colmena directly: nix run .#colmena -- apply
       apps.x86_64-linux.colmena = {
         type = "app";
         program = "${colmena.packages.x86_64-linux.colmena}/bin/colmena";

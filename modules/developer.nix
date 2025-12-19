@@ -1,32 +1,70 @@
-# Developer environment - Languages and tools beyond common.nix
-# (Core tools like git, gcc, python3 are in common.nix environment.systemPackages)
+# Developer environment - Languages, debugging, and development tools
 { pkgs, ... }:
 
 {
+  environment.systemPackages = with pkgs; [
+    # C/C++ toolchain
+    gcc
+    clang
+    llvm
+    cmake
+    ninja
+    gnumake
+
+    # Debuggers and profilers
+    gdb
+    lldb
+    valgrind
+    perf
+
+    # Build tools
+    pkg-config
+    autoconf
+    automake
+    libtool
+  ];
+
   users.users.armaan.packages = with pkgs; [
     # Programming languages
     rustup
     go
     gopls
+    zig
+    zls
     jdk
-    clang
-    llvm
-
-    # Python tooling (python3 interpreter + pip in systemPackages)
+    nodejs
+    python3
     uv
-    ruff
 
-    # Reverse engineering
-    ghidra
+    # Language servers and tooling
+    nil # Nix LSP
+    clang-tools # clangd, clang-format, etc.
+    ruff # Python linter
 
     # Data processing
     jq
     yq
 
-    # Formatters (for editor integration and direct use)
+    # Benchmarking and profiling
+    hyperfine
+
+    # Networking tools
+    dnsutils # dig, nslookup
+    tcpdump
+    iperf3
+    wireguard-tools
+
+    # Media tools
+    yt-dlp
+    imagemagick
+
+    # Reverse engineering
+    ghidra
+
+    # Formatters
     treefmt
+    nixfmt-rfc-style
     rustfmt
-    clang-tools # includes clang-format
     stylua
     shfmt
     taplo

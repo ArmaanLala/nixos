@@ -4,9 +4,7 @@
 {
   imports = [
     ../../modules/common.nix
-    ../../modules/auto-upgrade.nix
-    ../../modules/vm-config.nix
-    ../../modules/vm-hardware-config.nix
+    ../../modules/roles/vm-server.nix
   ];
 
   networking.hostName = "webserv";

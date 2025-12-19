@@ -1,14 +1,12 @@
-# Atlas - unified media server (*arr stack, jellyfin, sabnzbd)
+# Atlas - unified media server (*arr stack, sabnzbd)
 { ... }:
 
 {
   imports = [
     ../../modules/common.nix
-    ../../modules/auto-upgrade.nix
-    ../../modules/vm-config.nix
-    ../../modules/vm-hardware-config.nix
+    ../../modules/roles/vm-server.nix
     ../../modules/media-server.nix
-    ../../modules/jellyfin.nix
+    # ../../modules/jellyfin.nix
     ../../modules/nfs.nix
     ../../modules/vpn.nix
     ../../modules/vpn-sabnzbd.nix
