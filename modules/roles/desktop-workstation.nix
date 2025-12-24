@@ -7,6 +7,5 @@
     ../desktop.nix
     ../developer.nix
     ../steam.nix
-    ../stylix.nix
   ];
 }

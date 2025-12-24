@@ -31,6 +31,8 @@ in
   environment.systemPackages = with pkgs; [
     firefox
     thinkfan
+    desmume
+    mgba
   ];
 
   system.stateVersion = "25.11";

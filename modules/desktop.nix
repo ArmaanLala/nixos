@@ -56,6 +56,7 @@
     xdg-desktop-portal-hyprland
     xdg-desktop-portal-gtk
     xwayland-satellite
+    bottles
   ];
 
   # Desktop-specific user packages

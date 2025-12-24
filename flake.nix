@@ -9,7 +9,7 @@
     nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.11";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
-    stylix.url = "github:danth/stylix/release-25.11";
+    copyparty.url = "github:9001/copyparty";
     colmena.url = "github:zhaofengli/colmena";
     colmena.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.url = "github:numtide/treefmt-nix";
@@ -25,7 +25,7 @@
       nixos-hardware,
       nix-darwin,
       vpn-confinement,
-      stylix,
+      copyparty,
       colmena,
       treefmt-nix,
       ...
@@ -43,7 +43,6 @@
 
         beef = {
           modules = [
-            stylix.nixosModules.stylix
             ./hosts/beef/configuration.nix
           ];
           targetHost = "ts-beef";
@@ -63,13 +62,15 @@
         };
 
         webserv = {
-          modules = [ ./hosts/webserv/configuration.nix ];
+          modules = [
+            copyparty.nixosModules.default
+            ./hosts/webserv/configuration.nix
+          ];
           targetHost = "ts-web";
         };
 
         thinkpad = {
           modules = [
-            stylix.nixosModules.stylix
             nixos-hardware.nixosModules.lenovo-thinkpad-x1-yoga-7th-gen
             ./hosts/thinkpad/configuration.nix
           ];
@@ -82,7 +83,7 @@
         name: cfg:
         nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
-          specialArgs = { inherit colmena; };
+          specialArgs = { inherit colmena copyparty; };
           modules = cfg.modules;
         };
 
@@ -105,7 +106,7 @@
         {
           meta = {
             nixpkgs = import nixpkgs { system = "x86_64-linux"; };
-            specialArgs = { inherit colmena; };
+            specialArgs = { inherit colmena copyparty; };
           };
 
           defaults =
