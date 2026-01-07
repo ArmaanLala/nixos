@@ -63,10 +63,20 @@
   # Beef-specific packages
   environment.systemPackages = with pkgs; [
     firefox
+    quickemu
     hashcat
     john
     amdgpu_top
+    protonup-qt
   ];
+
+  programs.virt-manager.enable = true;
+
+  users.groups.libvirtd.members = [ "armaan" ];
+
+  virtualisation.libvirtd.enable = true;
+
+  virtualisation.spiceUSBRedirection.enable = true;
 
   services.gnome.gnome-keyring.enable = false;
 

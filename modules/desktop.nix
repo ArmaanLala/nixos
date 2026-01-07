@@ -108,6 +108,10 @@
 
     # Audio control
     pavucontrol
+
+    #emulation
+    mgba
+    melonDS
   ];
 
   # Polkit agent for authentication dialogs
