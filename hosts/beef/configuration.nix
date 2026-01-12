@@ -5,7 +5,9 @@
   imports = [
     ./hardware-configuration.nix
     ../../modules/common.nix
-    ../../modules/roles/desktop-workstation.nix
+    ../../modules/desktop.nix
+    ../../modules/dev.nix
+    ../../modules/gaming.nix
     ../../modules/nfs.nix
   ];
 

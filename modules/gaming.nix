@@ -1,4 +1,4 @@
-# Steam and gaming configuration
+# Gaming configuration - Steam, Proton, and performance tools
 { pkgs, ... }:
 
 {

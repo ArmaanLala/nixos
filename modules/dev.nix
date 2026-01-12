@@ -1,4 +1,4 @@
-# Developer environment - Languages, debugging, and development tools
+# Development environment - Languages, debugging, and tools
 { pkgs, ... }:
 
 {
