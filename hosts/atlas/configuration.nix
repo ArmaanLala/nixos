@@ -4,9 +4,8 @@
 {
   imports = [
     ../../modules/common.nix
-    ../../modules/roles/vm-server.nix
+    ../../modules/vm.nix
     ../../modules/media-server.nix
-    # ../../modules/jellyfin.nix
     ../../modules/nfs.nix
     ../../modules/vpn.nix
     ../../modules/vpn-sabnzbd.nix

@@ -4,10 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-25.11-darwin";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
-    nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.11";
-    nix-darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
     copyparty.url = "github:9001/copyparty";
     colmena.url = "github:zhaofengli/colmena";
@@ -21,9 +18,7 @@
       self,
       nixpkgs,
       nixpkgs-unstable,
-      nixpkgs-darwin,
       nixos-hardware,
-      nix-darwin,
       vpn-confinement,
       copyparty,
       colmena,
@@ -96,12 +91,6 @@
     {
       nixosConfigurations = builtins.mapAttrs mkNixosConfig hosts;
 
-      darwinConfigurations = {
-        "Armaans-MacBook-Pro" = nix-darwin.lib.darwinSystem {
-          modules = [ ./hosts/macbook/configuration.nix ];
-        };
-      };
-
       colmenaHive = colmena.lib.makeHive (
         {
           meta = {
@@ -113,7 +102,9 @@
             { ... }:
             {
               imports = [ ./modules/common.nix ];
-              deployment.targetUser = "armaan";
+              deployment = {
+                targetUser = "armaan";
+              };
             };
         }
         // builtins.mapAttrs mkColmenaNode hosts

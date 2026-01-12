@@ -4,7 +4,7 @@
 {
   imports = [
     ../../modules/common.nix
-    ../../modules/roles/vm-server.nix
+    ../../modules/vm.nix
     ../../modules/nfs.nix
   ];
 

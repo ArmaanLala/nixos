@@ -3,12 +3,9 @@
 
 {
   imports = [
-    ../../modules/common.nix
-    ../../modules/auto-upgrade.nix
-    ../../modules/immich.nix
-    ../../modules/jellyfin.nix
-    ../../modules/nfs.nix
     ./hardware-configuration.nix
+    ../../modules/common.nix
+    ../../modules/nfs.nix
   ];
 
   networking.hostName = "lenix";
@@ -24,6 +21,24 @@
   boot.loader.grub.enable = true;
   boot.loader.grub.device = "/dev/sda";
   boot.loader.grub.useOSProber = true;
+
+  # Jellyfin (inlined)
+  services.jellyfin = {
+    enable = true;
+    openFirewall = true;
+  };
+
+  # Immich (inlined)
+  services.immich = {
+    enable = true;
+    port = 2283;
+    openFirewall = true;
+    host = "0.0.0.0";
+    mediaLocation = "/mnt/immich/media";
+  };
+  systemd.tmpfiles.rules = [
+    "d /mnt/immich/media 0755 immich immich -"
+  ];
 
   system.stateVersion = "25.11";
 }
