@@ -47,6 +47,17 @@
     openFilesLimit = 8192;
   };
 
+  services.vikunja = {
+    enable = true;
+    frontendScheme = "http";
+    frontendHostname = "localhost";
+  };
+
+  services.actual = {
+    enable = true;
+    openFirewall = true;
+  };
+
   # Open firewall for LAN access
   networking.firewall.allowedTCPPorts = [
     8080
