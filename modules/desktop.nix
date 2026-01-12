@@ -15,7 +15,7 @@
 
   # Wayland compositors
   programs.niri.enable = true;
-  programs.hyprland.enable = lib.mkDefault false;
+  programs.hyprland.enable = true;
 
   # Enable CUPS to print documents
   services.printing.enable = true;
@@ -70,12 +70,19 @@
     # Gaming
     wineWowPackages.waylandFull
     itch
+    protonup-qt
 
     localsend
     caligula
 
     # System monitoring
     btop
+    amdgpu_top
+    nvtopPackages.amd
+
+    # Graphics diagnostics
+    mesa-demos
+    vulkan-tools
 
     # Desktop applications
     claude-code
@@ -83,6 +90,7 @@
     obs-studio
     kicad
     freecad
+    orca-slicer
     vlc
     ffmpeg
     rustdesk
