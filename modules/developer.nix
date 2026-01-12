@@ -60,6 +60,11 @@
 
     # Reverse engineering
     ghidra
+    hexyl
+    imhex
+
+    # OSINT
+    sherlock
 
     # Formatters
     treefmt

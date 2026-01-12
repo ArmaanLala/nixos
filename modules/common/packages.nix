@@ -29,6 +29,8 @@
         nmap
         lsof
         strace
+        pciutils
+        stow
       ];
     }
 
