@@ -13,6 +13,7 @@
 
   nfsMounts = {
     "/mnt/copyparty" = "10.0.0.160:/mnt/wdblue/copyparty";
+    "/mnt/manga" = "10.0.0.160:/mnt/wdblue/manga";
   };
 
   networking.hostName = "webserv";
@@ -74,7 +75,10 @@
         FLARESOLVERR_ENABLED = "true";
         FLARESOLVERR_URL = "http://flaresolverr:8191";
       };
-      volumes = [ "/var/lib/suwayomi:/home/suwayomi/.local/share/Tachidesk" ];
+      volumes = [
+        "/var/lib/suwayomi:/home/suwayomi/.local/share/Tachidesk"
+        "/mnt/manga/suwayomi:/home/suwayomi/.local/share/Tachidesk/downloads"
+      ];
       ports = [ "4567:4567" ];
     };
     flaresolverr = {
