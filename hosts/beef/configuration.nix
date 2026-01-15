@@ -16,6 +16,7 @@
     "/mnt/games" = "10.0.0.160:/mnt/wdblue/games";
     "/mnt/immich" = "10.0.0.160:/mnt/wdblue/immich";
     "/mnt/media" = "10.0.0.160:/mnt/wdblue/arr";
+    "/mnt/manga" = "10.0.0.160:/mnt/wdblue/manga";
   };
 
   networking.hostName = "beef";
