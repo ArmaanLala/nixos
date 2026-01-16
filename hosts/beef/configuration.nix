@@ -19,6 +19,7 @@
     "/mnt/manga" = "10.0.0.160:/mnt/wdblue/manga";
   };
 
+  services.udisks2.enable = true;
   networking.hostName = "beef";
 
   # Override common.nix bootloader - beef uses GRUB with custom Sekiro theme
@@ -69,8 +70,10 @@
     quickemu
     hashcat
     john
+    udiskie
     amdgpu_top
     protonup-qt
+    kcc
   ];
 
   programs.virt-manager.enable = true;
