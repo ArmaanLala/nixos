@@ -57,6 +57,7 @@
     xdg-desktop-portal-gtk
     xwayland-satellite
     bottles
+    opencode
   ];
 
   # Desktop-specific user packages

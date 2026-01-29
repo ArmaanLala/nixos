@@ -67,6 +67,7 @@
     package = pkgs.ollama-rocm;
     enable = true;
     host = "[::]";
+    environmentVariables.ROCR_VISIBLE_DEVICES = "0";
   };
 
   hardware.graphics = {
