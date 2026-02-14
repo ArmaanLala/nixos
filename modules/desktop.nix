@@ -11,8 +11,9 @@
   services.xserver.enable = true;
 
   # Display manager
-  services.displayManager.sddm.enable = true;
-
+  services.displayManager.sddm = {
+    enable = true;
+  };
   # Wayland compositors
   programs.niri.enable = true;
   programs.hyprland.enable = true;
