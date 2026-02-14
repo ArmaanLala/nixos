@@ -1,5 +1,10 @@
 # Common configuration shared across all hosts
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   # === Boot & System ===
@@ -60,19 +65,28 @@
     "100.106.156.10" = [ "ts-lenix" ];
     "100.112.154.50" = [ "ts-nyx" ];
     "100.87.181.8" = [ "ts-proton" ];
-    "100.103.38.71" = [ "jumpbox" "ts-tailscale" ];
+    "100.103.38.71" = [
+      "jumpbox"
+      "ts-tailscale"
+    ];
     "100.126.39.59" = [ "ts-thinkpad" ];
     "100.96.173.87" = [ "ts-web" ];
     "100.91.201.78" = [ "ts-truenas" ];
   };
 
   # === Users ===
-  users.groups.armaan = { gid = 1000; };
+  users.groups.armaan = {
+    gid = 1000;
+  };
 
   users.users.armaan = {
     isNormalUser = true;
     description = "Armaan Lala";
-    extraGroups = [ "networkmanager" "wheel" "armaan" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "armaan"
+    ];
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAxWbEebtUXP/g3+lSqQxRV8j3HbDZPEfvksbBognPtz armaan@nyx 2025-12-2"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPS2foqCO+tCzjg/CYsuaTX5SsjZyEpquDjbH4WXkLwR armaan@thinkpad 2025-12-03"
@@ -168,8 +182,14 @@
 
   # === Nix Settings ===
   nix.settings = {
-    trusted-users = [ "root" "@wheel" ];
-    experimental-features = [ "nix-command" "flakes" ];
+    trusted-users = [
+      "root"
+      "@wheel"
+    ];
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
     auto-optimise-store = true;
   };
 

@@ -1,6 +1,11 @@
 # VM-specific configuration (QEMU/KVM guests)
 # Combines guest config and optional generic hardware
-{ config, lib, modulesPath, ... }:
+{
+  config,
+  lib,
+  modulesPath,
+  ...
+}:
 
 {
   imports = [ (modulesPath + "/profiles/qemu-guest.nix") ];
@@ -40,7 +45,10 @@
       fileSystems."/boot" = {
         device = "/dev/disk/by-label/boot";
         fsType = "vfat";
-        options = [ "fmask=0077" "dmask=0077" ];
+        options = [
+          "fmask=0077"
+          "dmask=0077"
+        ];
       };
 
       swapDevices = [
