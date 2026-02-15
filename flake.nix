@@ -7,6 +7,8 @@
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
     copyparty.url = "github:9001/copyparty";
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
     colmena.url = "github:zhaofengli/colmena";
     colmena.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.url = "github:numtide/treefmt-nix";
@@ -21,6 +23,7 @@
       nixos-hardware,
       vpn-confinement,
       copyparty,
+      disko,
       colmena,
       treefmt-nix,
       ...
@@ -41,6 +44,14 @@
             ./hosts/beef/configuration.nix
           ];
           targetHost = "ts-beef";
+        };
+
+        drapion = {
+          modules = [
+            disko.nixosModules.disko
+            ./hosts/drapion/configuration.nix
+          ];
+          targetHost = "ts-drapion";
         };
 
         proton = {
