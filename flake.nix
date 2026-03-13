@@ -13,6 +13,7 @@
     colmena.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
+    claude-code.url = "github:sadjow/claude-code-nix";
   };
 
   outputs =
@@ -26,6 +27,7 @@
       disko,
       colmena,
       treefmt-nix,
+      claude-code,
       ...
     }:
     let
@@ -48,6 +50,13 @@
 
         drapion = {
           modules = [
+            (
+              { pkgs, ... }:
+              {
+                nixpkgs.overlays = [ claude-code.overlays.default ];
+                environment.systemPackages = [ pkgs.claude-code ];
+              }
+            )
             disko.nixosModules.disko
             ./hosts/drapion/configuration.nix
           ];
@@ -77,6 +86,13 @@
 
         thinkpad = {
           modules = [
+            (
+              { pkgs, ... }:
+              {
+                nixpkgs.overlays = [ claude-code.overlays.default ];
+                environment.systemPackages = [ pkgs.claude-code ];
+              }
+            )
             nixos-hardware.nixosModules.lenovo-thinkpad-x1-yoga-7th-gen
             ./hosts/thinkpad/configuration.nix
           ];
