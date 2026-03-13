@@ -19,6 +19,7 @@
     "/mnt/immich" = "10.0.0.160:/mnt/wdblue/immich";
     "/mnt/media" = "10.0.0.160:/mnt/wdblue/arr";
     "/mnt/manga" = "10.0.0.160:/mnt/wdblue/manga";
+    "/mnt/nightbeef" = "10.0.0.160:/mnt/wdblue/nightbeef";
   };
 
   services.udisks2.enable = true;
@@ -39,6 +40,10 @@
     host = "[::]";
   };
 
+  networking.firewall.allowedTCPPorts = [
+    11434
+  ];
+
   hardware.graphics = {
     enable = true;
     extraPackages = with pkgs; [
@@ -52,6 +57,8 @@
   environment.systemPackages = with pkgs; [
     firefox
     quickemu
+    arduino-ide
+    koboldcpp
     hashcat
     john
     udiskie
@@ -69,6 +76,18 @@
   virtualisation.spiceUSBRedirection.enable = true;
 
   services.gnome.gnome-keyring.enable = false;
+
+  # Allow unfree packages
+  nixpkgs.config.allowUnfree = true;
+
+  # QMK/VIA/Vial udev rules for keyboard firmware
+  services.udev.packages = with pkgs; [
+    qmk
+    qmk-udev-rules
+    qmk_hid
+    via
+    vial
+  ];
 
   system.stateVersion = "25.11";
 }

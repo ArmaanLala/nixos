@@ -124,6 +124,8 @@
     melonDS
   ];
 
+  programs.localsend.openFirewall = true;
+
   # Polkit agent for authentication dialogs
   security.polkit.enable = true;
 }
