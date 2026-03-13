@@ -14,10 +14,11 @@
   nfsMounts = {
     "/mnt/media" = "ts-truenas:/mnt/wdblue/arr";
     "/mnt/games" = "ts-truenas:/mnt/wdblue/games";
+    "/mnt/manga" = "10.0.0.160:/mnt/wdblue/manga";
   };
 
   networking.hostName = "thinkpad";
-  time.timeZone = "America/New_York";
+  time.timeZone = "America/Los_Angeles";
 
   # Fingerprint reader
   services.fprintd.enable = true;
