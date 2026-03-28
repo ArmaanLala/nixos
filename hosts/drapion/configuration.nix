@@ -57,6 +57,7 @@
   environment.systemPackages = with pkgs; [
     firefox
     quickemu
+    godot
     arduino-ide
     koboldcpp
     hashcat
