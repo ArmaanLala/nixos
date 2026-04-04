@@ -41,13 +41,6 @@
           targetHost = "ts-atlas";
         };
 
-        beef = {
-          modules = [
-            ./hosts/beef/configuration.nix
-          ];
-          targetHost = "ts-beef";
-        };
-
         drapion = {
           modules = [
             (
