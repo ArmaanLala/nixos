@@ -31,29 +31,14 @@
       ...
     }:
     let
-      # Single source of truth for host configurations
-      hosts = {
+      # Hosts managed remotely via colmena
+      remoteHosts = {
         atlas = {
           modules = [
             vpn-confinement.nixosModules.default
             ./hosts/atlas/configuration.nix
           ];
           targetHost = "ts-atlas";
-        };
-
-        drapion = {
-          modules = [
-            (
-              { pkgs, ... }:
-              {
-                nixpkgs.overlays = [ claude-code.overlays.default ];
-                environment.systemPackages = [ pkgs.claude-code ];
-              }
-            )
-            disko.nixosModules.disko
-            ./hosts/drapion/configuration.nix
-          ];
-          targetHost = "ts-drapion";
         };
 
         proton = {
@@ -93,6 +78,25 @@
         };
       };
 
+      # Local host, managed separately with nixos-rebuild / nh
+      localHosts = {
+        drapion = {
+          modules = [
+            (
+              { pkgs, ... }:
+              {
+                nixpkgs.overlays = [ claude-code.overlays.default ];
+                environment.systemPackages = [ pkgs.claude-code ];
+              }
+            )
+            disko.nixosModules.disko
+            ./hosts/drapion/configuration.nix
+          ];
+        };
+      };
+
+      allHosts = remoteHosts // localHosts;
+
       # Generate nixosConfigurations from hosts
       mkNixosConfig =
         name: cfg:
@@ -109,7 +113,7 @@
       };
     in
     {
-      nixosConfigurations = builtins.mapAttrs mkNixosConfig hosts;
+      nixosConfigurations = builtins.mapAttrs mkNixosConfig allHosts;
 
       colmenaHive = colmena.lib.makeHive (
         {
@@ -127,7 +131,7 @@
               };
             };
         }
-        // builtins.mapAttrs mkColmenaNode hosts
+        // builtins.mapAttrs mkColmenaNode remoteHosts
       );
 
       formatter.x86_64-linux =
