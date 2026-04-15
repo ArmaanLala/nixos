@@ -14,6 +14,7 @@
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
     claude-code.url = "github:sadjow/claude-code-nix";
+    pwndbg.url = "github:pwndbg/pwndbg";
   };
 
   outputs =
@@ -28,6 +29,7 @@
       colmena,
       treefmt-nix,
       claude-code,
+      pwndbg,
       ...
     }:
     let
@@ -92,6 +94,7 @@
             disko.nixosModules.disko
             ./hosts/drapion/configuration.nix
           ];
+          nixpkgs = nixpkgs-unstable;
         };
       };
 
@@ -100,9 +103,12 @@
       # Generate nixosConfigurations from hosts
       mkNixosConfig =
         name: cfg:
-        nixpkgs.lib.nixosSystem {
+        let
+          pkgs = if cfg ? nixpkgs then cfg.nixpkgs else nixpkgs;
+        in
+        pkgs.lib.nixosSystem {
           system = "x86_64-linux";
-          specialArgs = { inherit colmena copyparty; };
+          specialArgs = { inherit colmena copyparty pwndbg; };
           modules = cfg.modules;
         };
 
@@ -119,7 +125,7 @@
         {
           meta = {
             nixpkgs = import nixpkgs { system = "x86_64-linux"; };
-            specialArgs = { inherit colmena copyparty; };
+            specialArgs = { inherit colmena copyparty pwndbg; };
           };
 
           defaults =

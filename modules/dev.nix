@@ -1,5 +1,5 @@
 # Development environment - Languages, debugging, and tools
-{ pkgs, ... }:
+{ pkgs, pwndbg, ... }:
 
 {
   environment.systemPackages = with pkgs; [
@@ -14,6 +14,8 @@
     # Debuggers and profilers
     gdb
     lldb
+    pwndbg.packages.x86_64-linux.pwndbg
+    pwndbg.packages.x86_64-linux.pwndbg-lldb
     valgrind
     perf
 
@@ -74,6 +76,6 @@
     shfmt
     taplo
     yamlfmt
-    nodePackages.prettier
+    prettier
   ];
 }

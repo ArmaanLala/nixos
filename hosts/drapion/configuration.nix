@@ -1,6 +1,6 @@
 # Drapion - Desktop workstation with AMD GPU (replacing beef)
 # Hardware: Ryzen 7 7800X3D, AMD GPU, 1.8TB NVMe (btrfs)
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
   imports = [
@@ -34,10 +34,14 @@
 
   # Ollama with ROCm acceleration for AMD GPU
   services.ollama = {
-    acceleration = "rocm";
     package = pkgs.ollama-rocm;
     enable = true;
     host = "[::]";
+  };
+
+  # Enable GPU access for ollama
+  systemd.services.ollama.serviceConfig = {
+    User = "armaan";
   };
 
   networking.firewall.allowedTCPPorts = [
