@@ -45,7 +45,6 @@
 
         proton = {
           modules = [
-            vpn-confinement.nixosModules.default
             ./hosts/proton/configuration.nix
           ];
           targetHost = "ts-proton";
@@ -66,13 +65,6 @@
 
         thinkpad = {
           modules = [
-            (
-              { pkgs, ... }:
-              {
-                nixpkgs.overlays = [ claude-code.overlays.default ];
-                environment.systemPackages = [ pkgs.claude-code ];
-              }
-            )
             nixos-hardware.nixosModules.lenovo-thinkpad-x1-yoga-7th-gen
             ./hosts/thinkpad/configuration.nix
           ];
@@ -84,13 +76,6 @@
       localHosts = {
         drapion = {
           modules = [
-            (
-              { pkgs, ... }:
-              {
-                nixpkgs.overlays = [ claude-code.overlays.default ];
-                environment.systemPackages = [ pkgs.claude-code ];
-              }
-            )
             disko.nixosModules.disko
             ./hosts/drapion/configuration.nix
           ];
@@ -108,7 +93,14 @@
         in
         pkgs.lib.nixosSystem {
           system = "x86_64-linux";
-          specialArgs = { inherit colmena copyparty pwndbg; };
+          specialArgs = {
+            inherit
+              colmena
+              copyparty
+              pwndbg
+              claude-code
+              ;
+          };
           modules = cfg.modules;
         };
 
@@ -125,7 +117,14 @@
         {
           meta = {
             nixpkgs = import nixpkgs { system = "x86_64-linux"; };
-            specialArgs = { inherit colmena copyparty pwndbg; };
+            specialArgs = {
+              inherit
+                colmena
+                copyparty
+                pwndbg
+                claude-code
+                ;
+            };
           };
 
           defaults =

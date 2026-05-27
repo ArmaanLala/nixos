@@ -14,7 +14,7 @@
   networking.hostName = "atlas";
 
   nfsMounts = {
-    "/mnt/buzz" = "10.0.0.160:/mnt/wdblue/buzzer";
+    "/mnt/buzz" = "10.0.0.160:/mnt/wdblue/phub";
     "/mnt/media" = "10.0.0.160:/mnt/wdblue/arr";
   };
 

@@ -3,10 +3,20 @@
   pkgs,
   lib,
   colmena,
+  claude-code,
   ...
 }:
 
 {
+  nixpkgs.overlays = [
+    claude-code.overlays.default
+    # openldap test017-syncreplication-refresh is broken in nixpkgs; bottles depends on it
+    (final: prev: {
+      openldap = prev.openldap.overrideAttrs (_: {
+        doCheck = false;
+      });
+    })
+  ];
   # Enable the X11 windowing system (for XWayland support)
   services.xserver.enable = true;
 
@@ -16,7 +26,11 @@
   };
   # Wayland compositors
   programs.niri.enable = true;
-  programs.hyprland.enable = true;
+  programs.hyprland = {
+    enable = true;
+    withUWSM = true;
+    xwayland.enable = true;
+  };
 
   # Enable CUPS to print documents
   services.printing.enable = true;
@@ -70,7 +84,7 @@
     colmena.packages.x86_64-linux.colmena
 
     # Gaming
-    wineWowPackages.waylandFull
+    wineWow64Packages.waylandFull
     itch
     protonup-qt
 
@@ -122,7 +136,7 @@
 
     #emulation
     mgba
-    melonDS
+    melonds
   ];
 
   programs.localsend.openFirewall = true;

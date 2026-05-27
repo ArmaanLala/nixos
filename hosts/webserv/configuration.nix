@@ -7,6 +7,7 @@
     ../../modules/vm.nix
     ../../modules/nfs.nix
     ../../modules/podman.nix
+    ../../modules/open-webui.nix
   ];
 
   nixpkgs.overlays = [ copyparty.overlays.default ];
@@ -17,15 +18,6 @@
   };
 
   networking.hostName = "webserv";
-
-  services.open-webui = {
-    enable = true;
-    host = "0.0.0.0";
-    port = 8080;
-    environment = {
-      OLLAMA_BASE_URL = "http://beef:11434";
-    };
-  };
 
   environment.systemPackages = [ pkgs.copyparty ];
   services.copyparty = {
@@ -62,7 +54,6 @@
 
   # Open firewall for LAN access
   networking.firewall.allowedTCPPorts = [
-    8080
     3923
     4567
   ];

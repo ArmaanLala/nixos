@@ -1,4 +1,4 @@
-# Drapion - Desktop workstation with AMD GPU (replacing beef)
+# Drapion - Desktop workstation with AMD GPU
 # Hardware: Ryzen 7 7800X3D, AMD GPU, 1.8TB NVMe (btrfs)
 { pkgs, lib, ... }:
 
@@ -14,7 +14,6 @@
   ];
 
   nfsMounts = {
-    "/mnt/buzz" = "10.0.0.160:/mnt/wdblue/buzzer";
     "/mnt/games" = "10.0.0.160:/mnt/wdblue/games";
     "/mnt/immich" = "10.0.0.160:/mnt/wdblue/immich";
     "/mnt/media" = "10.0.0.160:/mnt/wdblue/arr";
@@ -32,17 +31,14 @@
   services.xserver.videoDrivers = [ "amdgpu" ];
   hardware.amdgpu.opencl.enable = true;
 
-  # Ollama with ROCm acceleration for AMD GPU
+  # Ollama with ROCm acceleration for AMD GPU (package selects ROCm backend)
   services.ollama = {
     package = pkgs.ollama-rocm;
     enable = true;
     host = "[::]";
+    environmentVariables.ROCR_VISIBLE_DEVICES = "0";
   };
-
-  # Enable GPU access for ollama
-  systemd.services.ollama.serviceConfig = {
-    User = "armaan";
-  };
+  systemd.services.ollama.serviceConfig.User = lib.mkForce "armaan";
 
   networking.firewall.allowedTCPPorts = [
     11434
@@ -57,18 +53,24 @@
     ];
   };
 
+  # Bluetooth
+  services.blueman.enable = true;
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = false;
+  };
+
   # Drapion-specific packages
   environment.systemPackages = with pkgs; [
+    r2modman
+    claude-code
+    calibre
     firefox
     quickemu
     godot
     arduino-ide
     koboldcpp
     hashcat
-    john
-    udiskie
-    amdgpu_top
-    protonup-qt
     kcc
   ];
 

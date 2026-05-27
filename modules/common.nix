@@ -49,7 +49,8 @@
     "10.0.0.144" = [ "cftunnel" ];
     "10.0.0.160" = [ "truenas" ];
     "10.0.0.174" = [ "atlas" ];
-    "10.0.0.183" = [ "beef" ];
+
+    "10.0.0.183" = [ "drapion" ];
     "10.0.0.186" = [ "lenix" ];
     "10.0.0.200" = [ "hydra" ];
     "10.0.0.201" = [ "loki" ];
@@ -61,8 +62,8 @@
     # Tailscale IPs
     "100.76.77.32" = [ "macbook" ];
     "100.90.169.115" = [ "ts-atlas" ];
-    "100.111.77.26" = [ "ts-beef" ];
-    "100.100.183.39" = [ "ts-desktop" ];
+
+    "100.99.14.97" = [ "ts-drapion" ];
     "100.106.33.35" = [ "iphone" ];
     "100.106.156.10" = [ "ts-lenix" ];
     "100.112.154.50" = [ "ts-nyx" ];
@@ -182,6 +183,10 @@
   ];
 
   # === Nix Settings ===
+  nix.extraOptions = ''
+    !include /etc/nix/github-token.conf
+  '';
+
   nix.settings = {
     trusted-users = [
       "root"
@@ -192,6 +197,14 @@
       "flakes"
     ];
     auto-optimise-store = true;
+    substituters = [
+      "https://cache.nixos.org"
+      "https://nix-community.cachix.org"
+    ];
+    trusted-public-keys = [
+      "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+    ];
   };
 
   nixpkgs.config.allowUnfree = true;
