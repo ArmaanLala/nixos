@@ -119,7 +119,6 @@
     waybar
     quickshell
     walker
-    elephant
     wofi
     fuzzel
     swaylock

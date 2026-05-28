@@ -62,7 +62,6 @@
 
   # Drapion-specific packages
   environment.systemPackages = with pkgs; [
-    r2modman
     claude-code
     calibre
     firefox
@@ -71,7 +70,6 @@
     arduino-ide
     koboldcpp
     hashcat
-    kcc
   ];
 
   programs.virt-manager.enable = true;
