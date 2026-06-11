@@ -13,8 +13,8 @@
   networking.hostName = "lenix";
 
   nfsMounts = {
-    "/mnt/immich" = "10.0.0.160:/mnt/wdblue/immich";
-    "/mnt/media" = "10.0.0.160:/mnt/wdblue/arr";
+    "/mnt/immich" = "truenas:/mnt/wdblue/immich";
+    "/mnt/media" = "truenas:/mnt/wdblue/arr";
   };
 
   # Override common.nix bootloader - lenix uses GRUB on /dev/sda (legacy BIOS)

@@ -42,7 +42,6 @@
     "10.0.0.102" = [ "repoman" ];
     "10.0.0.105" = [ "weed" ];
     "10.0.0.113" = [ "thinkpad" ];
-    "10.0.0.114" = [ "thinkpad" ];
     "10.0.0.111" = [ "webserv.com" ];
     "10.0.0.165" = [ "n8n.com" ];
     "10.0.0.139" = [ "photos" ];
@@ -130,8 +129,8 @@
   services.openssh = {
     enable = true;
     settings = {
-      PasswordAuthentication = true;
-      KbdInteractiveAuthentication = true;
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
     };
   };
 

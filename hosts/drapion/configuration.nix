@@ -5,7 +5,6 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ./disko-config.nix
     ../../modules/common.nix
     ../../modules/desktop.nix
     ../../modules/dev.nix
@@ -14,11 +13,11 @@
   ];
 
   nfsMounts = {
-    "/mnt/games" = "10.0.0.160:/mnt/wdblue/games";
-    "/mnt/immich" = "10.0.0.160:/mnt/wdblue/immich";
-    "/mnt/media" = "10.0.0.160:/mnt/wdblue/arr";
-    "/mnt/manga" = "10.0.0.160:/mnt/wdblue/manga";
-    "/mnt/nightbeef" = "10.0.0.160:/mnt/wdblue/nightbeef";
+    "/mnt/games" = "truenas:/mnt/wdblue/games";
+    "/mnt/immich" = "truenas:/mnt/wdblue/immich";
+    "/mnt/media" = "truenas:/mnt/wdblue/arr";
+    "/mnt/manga" = "truenas:/mnt/wdblue/manga";
+    "/mnt/nightbeef" = "truenas:/mnt/wdblue/nightbeef";
   };
 
   services.udisks2.enable = true;
@@ -62,14 +61,17 @@
 
   # Drapion-specific packages
   environment.systemPackages = with pkgs; [
-    claude-code
     calibre
+    discord
     firefox
+    claude-code
     quickemu
     godot
     arduino-ide
     koboldcpp
     hashcat
+    steamtinkerlaunch
+    winetricks
   ];
 
   programs.virt-manager.enable = true;
@@ -82,8 +84,7 @@
 
   services.gnome.gnome-keyring.enable = false;
 
-  # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
+  services.openssh.settings.PasswordAuthentication = lib.mkForce true;
 
   # QMK/VIA/Vial udev rules for keyboard firmware
   services.udev.packages = with pkgs; [

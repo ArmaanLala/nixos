@@ -13,6 +13,47 @@
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
 
+  fileSystems."/" = {
+    device = "/dev/disk/by-uuid/c060bebc-9898-4bcb-8b06-c5c92f6834c8";
+    fsType = "btrfs";
+    options = [ "subvol=/rootfs" "ssd" "discard=async" "space_cache=v2" "relatime" ];
+  };
+
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-uuid/27AF-3E6A";
+    fsType = "vfat";
+    options = [ "fmask=0077" "dmask=0077" ];
+  };
+
+  fileSystems."/home" = {
+    device = "/dev/disk/by-uuid/c060bebc-9898-4bcb-8b06-c5c92f6834c8";
+    fsType = "btrfs";
+    options = [ "subvol=/home" "ssd" "discard=async" "space_cache=v2" "relatime" ];
+  };
+
+  fileSystems."/nix" = {
+    device = "/dev/disk/by-uuid/c060bebc-9898-4bcb-8b06-c5c92f6834c8";
+    fsType = "btrfs";
+    options = [ "subvol=/nix" "ssd" "discard=async" "space_cache=v2" "noatime" ];
+  };
+
+  fileSystems."/.swapvol" = {
+    device = "/dev/disk/by-uuid/c060bebc-9898-4bcb-8b06-c5c92f6834c8";
+    fsType = "btrfs";
+    options = [ "subvol=/swap" "ssd" "discard=async" "space_cache=v2" "relatime" ];
+  };
+
+  fileSystems."/partition-root" = {
+    device = "/dev/disk/by-uuid/c060bebc-9898-4bcb-8b06-c5c92f6834c8";
+    fsType = "btrfs";
+    options = [ "subvol=/" "ssd" "discard=async" "space_cache=v2" "relatime" ];
+  };
+
+  swapDevices = [{
+    device = "/.swapvol/swapfile";
+    size = 4096;
+  }];
+
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 }

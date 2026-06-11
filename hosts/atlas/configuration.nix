@@ -14,8 +14,8 @@
   networking.hostName = "atlas";
 
   nfsMounts = {
-    "/mnt/buzz" = "10.0.0.160:/mnt/wdblue/phub";
-    "/mnt/media" = "10.0.0.160:/mnt/wdblue/arr";
+    "/mnt/buzz" = "truenas:/mnt/wdblue/phub";
+    "/mnt/media" = "truenas:/mnt/wdblue/arr";
   };
 
   system.stateVersion = "25.05";

@@ -13,11 +13,12 @@
   nixpkgs.overlays = [ copyparty.overlays.default ];
 
   nfsMounts = {
-    "/mnt/copyparty" = "10.0.0.160:/mnt/wdblue/copyparty";
-    "/mnt/manga" = "10.0.0.160:/mnt/wdblue/manga";
+    "/mnt/copyparty" = "truenas:/mnt/wdblue/copyparty";
+    "/mnt/manga" = "truenas:/mnt/wdblue/manga";
   };
 
   networking.hostName = "webserv";
+  openWebui.ollamaUrl = "http://drapion:11434";
 
   environment.systemPackages = [ pkgs.copyparty ];
   services.copyparty = {

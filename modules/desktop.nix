@@ -115,11 +115,12 @@
     # File manager
     nautilus
 
+    # Cursor theme
+    phinger-cursors
+
     # Wayland compositor tools & utilities
     waybar
     quickshell
-    walker
-    wofi
     fuzzel
     swaylock
     mako
