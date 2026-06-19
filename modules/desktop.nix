@@ -109,8 +109,6 @@
     orca-slicer
     vlc
     ffmpeg
-    rustdesk
-    rustdesk-server
 
     # File manager
     nautilus

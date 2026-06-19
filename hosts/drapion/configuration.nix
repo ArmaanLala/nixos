@@ -23,8 +23,17 @@
   services.udisks2.enable = true;
   networking.hostName = "drapion";
 
-  # Drapion uses systemd-boot (default from common.nix) with btrfs via disko
-  # No need to override bootloader settings
+  # Lanzaboote replaces systemd-boot for Secure Boot support
+  boot.loader.systemd-boot.enable = lib.mkForce false;
+  boot.lanzaboote = {
+    enable = true;
+    pkiBundle = "/var/lib/sbctl";
+  };
+  boot.lanzaboote.autoGenerateKeys.enable = true;
+
+  boot.lanzaboote.autoEnrollKeys = {
+    enable = true;
+  };
 
   # AMD GPU
   services.xserver.videoDrivers = [ "amdgpu" ];
@@ -62,11 +71,14 @@
   # Drapion-specific packages
   environment.systemPackages = with pkgs; [
     calibre
+    sbctl
     discord
     firefox
     claude-code
+    grimblast
     quickemu
     godot
+    r2modman
     arduino-ide
     koboldcpp
     hashcat
