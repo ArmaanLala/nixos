@@ -3,3 +3,8 @@ result
 CLAUDE.md
 temp
 .claude
+
+# Static site content is served from /var/www on drapion, not the repo.
+# Published via the deploy.sh in ~/pptnight and ~/givememoney.
+/hosts/drapion/alpd/
+/hosts/drapion/givememoney/

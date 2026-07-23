@@ -23,17 +23,7 @@
   services.udisks2.enable = true;
   networking.hostName = "drapion";
 
-  # Lanzaboote replaces systemd-boot for Secure Boot support
-  boot.loader.systemd-boot.enable = lib.mkForce false;
-  boot.lanzaboote = {
-    enable = true;
-    pkiBundle = "/var/lib/sbctl";
-  };
-  boot.lanzaboote.autoGenerateKeys.enable = true;
-
-  boot.lanzaboote.autoEnrollKeys = {
-    enable = true;
-  };
+  # Drapion uses systemd-boot (default from common.nix) with btrfs via disko
 
   # AMD GPU
   services.xserver.videoDrivers = [ "amdgpu" ];
@@ -44,13 +34,49 @@
     package = pkgs.ollama-rocm;
     enable = true;
     host = "[::]";
-    environmentVariables.ROCR_VISIBLE_DEVICES = "0";
   };
   systemd.services.ollama.serviceConfig.User = lib.mkForce "armaan";
 
   networking.firewall.allowedTCPPorts = [
     11434
+    8417
+    8418
   ];
+
+  # Static sites. Content lives OUTSIDE the nix repo in /var/www/<site> and is
+  # published by the deploy.sh in each source project (~/pptnight, ~/givememoney).
+  # nginx serves the files live, so updating a site needs no rebuild — just rsync.
+  systemd.tmpfiles.rules = [
+    "d /var/www 0755 root root -"
+    "d /var/www/alpd 0755 armaan users -"
+    "d /var/www/givememoney 0755 armaan users -"
+  ];
+
+  services.nginx = {
+    enable = true;
+    virtualHosts."alpd" = {
+      listen = [
+        {
+          addr = "0.0.0.0";
+          port = 8417;
+        }
+      ];
+      locations."/".root = "/var/www/alpd";
+      # Never serve dotfiles/dirs (.claude, .git, ...) even though the web root
+      # is now the working directory.
+      locations."~ /\\.".return = 404;
+    };
+    virtualHosts."givememoney" = {
+      listen = [
+        {
+          addr = "0.0.0.0";
+          port = 8418;
+        }
+      ];
+      locations."/".root = "/var/www/givememoney";
+      locations."~ /\\.".return = 404;
+    };
+  };
 
   hardware.graphics = {
     enable = true;
@@ -71,6 +97,7 @@
   # Drapion-specific packages
   environment.systemPackages = with pkgs; [
     calibre
+    gimp3
     sbctl
     discord
     firefox

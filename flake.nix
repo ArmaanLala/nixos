@@ -7,8 +7,6 @@
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
     copyparty.url = "github:9001/copyparty";
-    colmena.url = "github:zhaofengli/colmena";
-    colmena.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
     claude-code.url = "github:sadjow/claude-code-nix";
@@ -23,65 +21,51 @@
       nixos-hardware,
       vpn-confinement,
       copyparty,
-      colmena,
       treefmt-nix,
       claude-code,
       pwndbg,
       ...
     }:
     let
-      # Hosts managed remotely via colmena
-      remoteHosts = {
-        atlas = {
-          modules = [
-            vpn-confinement.nixosModules.default
-            ./hosts/atlas/configuration.nix
-          ];
-          targetHost = "ts-atlas";
-        };
-
-        proton = {
-          modules = [
-            ./hosts/proton/configuration.nix
-          ];
-          targetHost = "ts-proton";
-        };
-
-        lenix = {
-          modules = [ ./hosts/lenix/configuration.nix ];
-          targetHost = "ts-lenix";
-        };
-
-        webserv = {
-          modules = [
-            copyparty.nixosModules.default
-            ./hosts/webserv/configuration.nix
-          ];
-          targetHost = "ts-web";
-        };
-
-        thinkpad = {
-          modules = [
-            nixos-hardware.nixosModules.lenovo-thinkpad-x1-yoga-7th-gen
-            ./hosts/thinkpad/configuration.nix
-          ];
-          targetHost = "ts-thinkpad";
-        };
+      specialArgs = {
+        inherit
+          copyparty
+          pwndbg
+          claude-code
+          ;
       };
 
-      # Local host, managed separately with nixos-rebuild / nh
-      localHosts = {
+      # All hosts. Each entry provides a module list; the optional `nixpkgs`
+      # attribute overrides the default (stable) channel for that host.
+      # Hosts pull the newest config from git and rebuild themselves via
+      # system.autoUpgrade (configured in modules/common.nix).
+      hosts = {
+        atlas.modules = [
+          vpn-confinement.nixosModules.default
+          ./hosts/atlas/configuration.nix
+        ];
+
+        proton.modules = [ ./hosts/proton/configuration.nix ];
+
+        lenix.modules = [ ./hosts/lenix/configuration.nix ];
+
+        webserv.modules = [
+          copyparty.nixosModules.default
+          ./hosts/webserv/configuration.nix
+        ];
+
+        thinkpad.modules = [
+          nixos-hardware.nixosModules.lenovo-thinkpad-x1-yoga-7th-gen
+          ./hosts/thinkpad/configuration.nix
+        ];
+
         drapion = {
-          modules = [
-            ./hosts/drapion/configuration.nix
-          ];
+          modules = [ ./hosts/drapion/configuration.nix ];
           nixpkgs = nixpkgs-unstable;
         };
       };
 
-      allHosts = remoteHosts // localHosts;
-
-      # Generate nixosConfigurations from hosts
+      # Generate a nixosSystem from a host entry
       mkNixosConfig =
         name: cfg:
         let
@@ -89,51 +73,12 @@
         in
         pkgs.lib.nixosSystem {
           system = "x86_64-linux";
-          specialArgs = {
-            inherit
-              colmena
-              copyparty
-              pwndbg
-              claude-code
-              ;
-          };
+          inherit specialArgs;
           modules = cfg.modules;
         };
-
-      # Generate colmena node from hosts
-      mkColmenaNode = name: cfg: {
-        imports = cfg.modules;
-        deployment.targetHost = cfg.targetHost;
-      };
     in
     {
-      nixosConfigurations = builtins.mapAttrs mkNixosConfig allHosts;
-
-      colmenaHive = colmena.lib.makeHive (
-        {
-          meta = {
-            nixpkgs = import nixpkgs { system = "x86_64-linux"; };
-            specialArgs = {
-              inherit
-                colmena
-                copyparty
-                pwndbg
-                claude-code
-                ;
-            };
-          };
-
-          defaults =
-            { ... }:
-            {
-              imports = [ ./modules/common.nix ];
-              deployment = {
-                targetUser = "armaan";
-              };
-            };
-        }
-        // builtins.mapAttrs mkColmenaNode remoteHosts
-      );
+      nixosConfigurations = builtins.mapAttrs mkNixosConfig hosts;
 
       formatter.x86_64-linux =
         let
@@ -141,18 +86,5 @@
           treefmtEval = treefmt-nix.lib.evalModule pkgs ./lib/treefmt.nix;
         in
         treefmtEval.config.build.wrapper;
-
-      devShells.x86_64-linux.default =
-        let
-          pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        in
-        pkgs.mkShell {
-          packages = [ colmena.packages.x86_64-linux.colmena ];
-        };
-
-      apps.x86_64-linux.colmena = {
-        type = "app";
-        program = "${colmena.packages.x86_64-linux.colmena}/bin/colmena";
-      };
     };
 }

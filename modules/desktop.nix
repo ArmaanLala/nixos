@@ -2,7 +2,6 @@
 {
   pkgs,
   lib,
-  colmena,
   claude-code,
   ...
 }:
@@ -16,6 +15,7 @@
         doCheck = false;
       });
     })
+    # patool's mime/archive tests fail in the sandbox (missing bzip2/xz/lzma tool detection); bottles depends on it
   ];
   # Enable the X11 windowing system (for XWayland support)
   services.xserver.enable = true;
@@ -71,7 +71,7 @@
     xdg-desktop-portal-hyprland
     xdg-desktop-portal-gtk
     xwayland-satellite
-    bottles
+    # bottles # temporarily disabled - patool tests failing on python 3.14
     opencode
   ];
 
@@ -81,7 +81,6 @@
     # Terminal emulators
     ghostty
     alacritty
-    colmena.packages.x86_64-linux.colmena
 
     # Gaming
     wineWow64Packages.waylandFull
@@ -102,10 +101,10 @@
 
     # Desktop applications
     claude-code
-    vesktop
+
     obs-studio
     kicad
-    freecad
+    # freecad # temporarily disabled - rebuilds vtk/pdal/gdal from source, slow
     orca-slicer
     vlc
     ffmpeg

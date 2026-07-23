@@ -10,6 +10,7 @@
   # === Boot & System ===
   boot.loader.systemd-boot.enable = lib.mkDefault true;
   boot.loader.efi.canTouchEfiVariables = lib.mkDefault true;
+  boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
 
   time.timeZone = lib.mkDefault "America/Los_Angeles";
   i18n.defaultLocale = "en_US.UTF-8";
@@ -226,16 +227,18 @@
   };
 
   # === Auto Upgrade ===
+  # Each host fetches the newest committed config straight from GitHub and
+  # rebuilds itself. This runs as root via nix (no local git checkout), so there
+  # are no file-ownership / "git pull needs root" problems. The autoUpgrade
+  # module adds --refresh automatically, so every run sees the latest commit.
+  # `persistent` catches up on missed runs if the host was powered off.
   system.autoUpgrade = {
     enable = true;
-    flake = "/etc/nixos#${config.networking.hostName}";
+    flake = "github:ArmaanLala/nixos#${config.networking.hostName}";
     dates = "Sat *-*-* 03:00:00";
+    randomizedDelaySec = "45min";
+    persistent = true;
     allowReboot = false;
     flags = [ "-L" ];
   };
-
-  systemd.services.nixos-upgrade.preStart = ''
-    cd /etc/nixos
-    ${pkgs.git}/bin/git pull --ff-only || true
-  '';
 }
