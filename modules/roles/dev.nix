@@ -70,7 +70,7 @@
 
     # Formatters
     treefmt
-    nixfmt-rfc-style
+    nixfmt
     rustfmt
     stylua
     shfmt

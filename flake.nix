@@ -5,12 +5,14 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+    nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
+    # No `follows` for vpn-confinement: that flake declares no inputs at all, so
+    # an override would warn about a non-existent input on every evaluation.
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
-    copyparty.url = "github:9001/copyparty";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
-    claude-code.url = "github:sadjow/claude-code-nix";
     pwndbg.url = "github:pwndbg/pwndbg";
+    pwndbg.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
@@ -20,71 +22,63 @@
       nixpkgs-unstable,
       nixos-hardware,
       vpn-confinement,
-      copyparty,
       treefmt-nix,
-      claude-code,
       pwndbg,
       ...
     }:
     let
-      specialArgs = {
-        inherit
-          copyparty
-          pwndbg
-          claude-code
-          ;
-      };
+      system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
+      treefmtEval = treefmt-nix.lib.evalModule pkgs ./lib/treefmt.nix;
 
-      # All hosts. Each entry provides a module list; the optional `nixpkgs`
-      # attribute overrides the default (stable) channel for that host.
-      # Hosts pull the newest config from git and rebuild themselves via
-      # system.autoUpgrade (configured in modules/common.nix).
-      hosts = {
-        atlas.modules = [
-          vpn-confinement.nixosModules.default
-          ./hosts/atlas/configuration.nix
-        ];
-
-        proton.modules = [ ./hosts/proton/configuration.nix ];
-
-        lenix.modules = [ ./hosts/lenix/configuration.nix ];
-
-        webserv.modules = [
-          copyparty.nixosModules.default
-          ./hosts/webserv/configuration.nix
-        ];
-
-        thinkpad.modules = [
-          nixos-hardware.nixosModules.lenovo-thinkpad-x1-yoga-7th-gen
-          ./hosts/thinkpad/configuration.nix
-        ];
-
-        drapion = {
-          modules = [ ./hosts/drapion/configuration.nix ];
-          nixpkgs = nixpkgs-unstable;
-        };
-      };
-
-      # Generate a nixosSystem from a host entry
-      mkNixosConfig =
-        name: cfg:
-        let
-          pkgs = if cfg ? nixpkgs then cfg.nixpkgs else nixpkgs;
-        in
-        pkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          inherit specialArgs;
-          modules = cfg.modules;
-        };
+      specialArgs = { inherit pwndbg; };
     in
     {
-      nixosConfigurations = builtins.mapAttrs mkNixosConfig hosts;
+      # Hosts pull the newest config from git and rebuild themselves via
+      # system.autoUpgrade (configured in modules/common.nix).
+      nixosConfigurations = {
+        atlas = nixpkgs.lib.nixosSystem {
+          inherit system specialArgs;
+          modules = [
+            vpn-confinement.nixosModules.default
+            ./hosts/atlas/configuration.nix
+          ];
+        };
 
-      formatter.x86_64-linux =
-        let
-          pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          treefmtEval = treefmt-nix.lib.evalModule pkgs ./lib/treefmt.nix;
-        in
-        treefmtEval.config.build.wrapper;
+        proton = nixpkgs.lib.nixosSystem {
+          inherit system specialArgs;
+          modules = [ ./hosts/proton/configuration.nix ];
+        };
+
+        lenix = nixpkgs.lib.nixosSystem {
+          inherit system specialArgs;
+          modules = [ ./hosts/lenix/configuration.nix ];
+        };
+
+        webster = nixpkgs.lib.nixosSystem {
+          inherit system specialArgs;
+          modules = [ ./hosts/webster/configuration.nix ];
+        };
+
+        thinkpad = nixpkgs.lib.nixosSystem {
+          inherit system specialArgs;
+          modules = [
+            nixos-hardware.nixosModules.lenovo-thinkpad-x1-yoga-7th-gen
+            ./hosts/thinkpad/configuration.nix
+          ];
+        };
+
+        # drapion tracks unstable rather than the 25.11 release.
+        drapion = nixpkgs-unstable.lib.nixosSystem {
+          inherit system specialArgs;
+          modules = [ ./hosts/drapion/configuration.nix ];
+        };
+      };
+
+      formatter.${system} = treefmtEval.config.build.wrapper;
+
+      # Makes `nix flake check` fail on formatting drift instead of leaving
+      # `nix fmt` advisory. CI runs this alongside the per-host evaluations.
+      checks.${system}.formatting = treefmtEval.config.build.check self;
     };
 }

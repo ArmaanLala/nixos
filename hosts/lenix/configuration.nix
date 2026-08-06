@@ -1,20 +1,21 @@
-# Lenix - Physical machine with Immich and Jellyfin
+# Lenix - Physical machine with Immich, Jellyfin and Paperless
 { ... }:
 
 {
   imports = [
     ./hardware-configuration.nix
-    ../../modules/common.nix
-    ../../modules/nfs.nix
-    ../../modules/jellyfin.nix
-    ../../modules/immich.nix
+    ../../modules/core/common.nix
+    ../../modules/hardware/nfs.nix
+    ../../modules/services/jellyfin.nix
+    ../../modules/services/immich.nix
+    ../../modules/services/paperless.nix
   ];
 
   networking.hostName = "lenix";
 
-  nfsMounts = {
-    "/mnt/immich" = "truenas:/mnt/wdblue/immich";
-    "/mnt/media" = "truenas:/mnt/wdblue/arr";
+  nfs.shares = {
+    immich = "immich";
+    media = "arr";
   };
 
   # Override common.nix bootloader - lenix uses GRUB on /dev/sda (legacy BIOS)

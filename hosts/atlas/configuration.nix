@@ -3,19 +3,19 @@
 
 {
   imports = [
-    ../../modules/common.nix
-    ../../modules/vm.nix
-    ../../modules/media-server.nix
-    ../../modules/nfs.nix
-    ../../modules/vpn.nix
-    ../../modules/vpn-sabnzbd.nix
+    ../../modules/core/common.nix
+    ../../modules/hardware/nfs.nix
+    ../../modules/hardware/vm-guest.nix
+    ../../modules/hardware/vm-disks.nix
+    ../../modules/roles/media-server.nix
+    ../../modules/services/vpn.nix
   ];
 
   networking.hostName = "atlas";
 
-  nfsMounts = {
-    "/mnt/buzz" = "truenas:/mnt/wdblue/phub";
-    "/mnt/media" = "truenas:/mnt/wdblue/arr";
+  nfs.shares = {
+    buzz = "phub";
+    media = "arr";
   };
 
   system.stateVersion = "25.05";

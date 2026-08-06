@@ -14,7 +14,6 @@
 
   time.timeZone = lib.mkDefault "America/Los_Angeles";
   i18n.defaultLocale = "en_US.UTF-8";
-  services.xserver.xkb.layout = "us";
 
   # === Networking ===
   services.tailscale.enable = true;
@@ -43,8 +42,7 @@
     "10.0.0.102" = [ "repoman" ];
     "10.0.0.105" = [ "weed" ];
     "10.0.0.113" = [ "thinkpad" ];
-    "10.0.0.111" = [ "webserv.com" ];
-    "10.0.0.165" = [ "n8n.com" ];
+    "10.0.0.111" = [ "webster" ];
     "10.0.0.139" = [ "photos" ];
     "10.0.0.144" = [ "cftunnel" ];
     "10.0.0.160" = [ "truenas" ];
@@ -73,7 +71,7 @@
       "ts-tailscale"
     ];
     "100.126.39.59" = [ "ts-thinkpad" ];
-    "100.96.173.87" = [ "ts-web" ];
+    "100.96.173.87" = [ "ts-webster" ];
     "100.91.201.78" = [ "ts-truenas" ];
   };
 
@@ -117,7 +115,7 @@
       gh
 
       # Shell and terminal
-      fish
+      # (fish itself comes from programs.fish.enable, which adds it to systemPackages)
       tmux
       fastfetch
       starship
@@ -183,6 +181,9 @@
   ];
 
   # === Nix Settings ===
+  # `!include` (rather than `include`) is deliberate: per nix.conf(5) a missing
+  # file is only an error for `include`. Hosts that never had the token
+  # provisioned still evaluate. See docs/secrets.md.
   nix.extraOptions = ''
     !include /etc/nix/github-token.conf
   '';
@@ -206,6 +207,15 @@
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
     ];
   };
+
+  # Make ad-hoc `nix shell nixpkgs#foo` and `nix-shell -p` resolve to the exact
+  # nixpkgs this host was built from instead of fetching a different channel.
+  # pkgs.path is per-host correct: drapion gets unstable, everyone else 25.11.
+  nix.registry.nixpkgs.to = {
+    type = "path";
+    path = pkgs.path;
+  };
+  nix.nixPath = [ "nixpkgs=${pkgs.path}" ];
 
   nixpkgs.config.allowUnfree = true;
   environment.variables.EDITOR = "nvim";

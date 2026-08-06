@@ -4,17 +4,17 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ../../modules/common.nix
-    ../../modules/vm.nix
-    ../../modules/jellyfin.nix
+    ../../modules/core/common.nix
+    ../../modules/hardware/nfs.nix
+    # Guest integration only — proton has its own hardware-configuration.nix,
+    # so it does not get hardware/vm-disks.nix.
+    ../../modules/hardware/vm-guest.nix
+    ../../modules/services/jellyfin.nix
   ];
 
-  # Use own hardware-configuration.nix instead of generic VM hardware
-  vm.useGenericHardware = false;
-
-  nfsMounts = {
-    "/mnt/buzz" = "truenas:/mnt/wdblue/phub";
-    "/mnt/media" = "truenas:/mnt/wdblue/arr";
+  nfs.shares = {
+    buzz = "phub";
+    media = "arr";
   };
 
   networking.hostName = "proton";

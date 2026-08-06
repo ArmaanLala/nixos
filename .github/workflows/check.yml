@@ -1,0 +1,42 @@
+name: check
+# Every host rebuilds itself from this branch unattended (system.autoUpgrade in
+# modules/common.nix, Saturdays 03:00). A main that does not evaluate breaks all
+# six machines at once, so evaluate each of them on every push.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  eval:
+    name: eval ${{ matrix.host }}
+    runs-on: ubuntu-latest
+    strategy:
+      # One broken host should not hide the state of the other five.
+      fail-fast: false
+      matrix:
+        host:
+          - atlas
+          - proton
+          - lenix
+          - webster
+          - thinkpad
+          - drapion
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Evaluate ${{ matrix.host }}
+        # Evaluation alone catches the realistic failures — options renamed by a
+        # flake update, typo'd attributes, missing imports — without needing any
+        # build capacity. allowUnfree is set inside the config, so no env var.
+        run: |
+          nix eval --raw \
+            .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel.drvPath
+  formatting:
+    name: formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Check treefmt formatting
+        run: nix build --no-link .#checks.x86_64-linux.formatting

@@ -2,23 +2,19 @@
 {
   pkgs,
   lib,
-  claude-code,
   ...
 }:
 
 {
-  nixpkgs.overlays = [
-    claude-code.overlays.default
-    # openldap test017-syncreplication-refresh is broken in nixpkgs; bottles depends on it
-    (final: prev: {
-      openldap = prev.openldap.overrideAttrs (_: {
-        doCheck = false;
-      });
-    })
-    # patool's mime/archive tests fail in the sandbox (missing bzip2/xz/lzma tool detection); bottles depends on it
-  ];
-  # Enable the X11 windowing system (for XWayland support)
+  # NOT for XWayland — that comes from programs.hyprland.xwayland.enable below
+  # and xwayland-satellite (niri). This is here purely to satisfy SDDM's
+  # assertion that one of services.xserver / sddm.wayland is enabled; we run the
+  # X11 greeter. Removing it means setting services.displayManager.sddm.wayland
+  # in the same commit.
   services.xserver.enable = true;
+
+  # publish.enable/addresses are already set in common.nix; desktops add this.
+  services.avahi.publish.userServices = true;
 
   # Display manager
   services.displayManager.sddm = {
@@ -76,16 +72,12 @@
   ];
 
   # Desktop-specific user packages
-  # (System integration tools like polkit_gnome and xdg-desktop-portals are in environment.systemPackages)
   users.users.armaan.packages = with pkgs; [
+    firefox
+
     # Terminal emulators
     ghostty
     alacritty
-
-    # Gaming
-    wineWow64Packages.waylandFull
-    itch
-    protonup-qt
 
     localsend
     caligula
@@ -130,10 +122,6 @@
 
     # Audio control
     pavucontrol
-
-    #emulation
-    mgba
-    melonds
   ];
 
   programs.localsend.openFirewall = true;

@@ -4,17 +4,19 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ../../modules/common.nix
-    ../../modules/desktop.nix
-    ../../modules/dev.nix
-    ../../modules/gaming.nix
-    ../../modules/nfs.nix
+    ../../modules/core/common.nix
+    ../../modules/roles/desktop.nix
+    ../../modules/roles/dev.nix
+    ../../modules/roles/gaming.nix
+    ../../modules/hardware/nfs.nix
   ];
 
-  nfsMounts = {
-    "/mnt/media" = "ts-truenas:/mnt/wdblue/arr";
-    "/mnt/games" = "ts-truenas:/mnt/wdblue/games";
-    "/mnt/manga" = "ts-truenas:/mnt/wdblue/manga";
+  # Roaming laptop — reach the NAS over the tailnet rather than the LAN.
+  nfs.server = "ts-truenas";
+  nfs.shares = {
+    media = "arr";
+    games = "games";
+    manga = "manga";
   };
 
   networking.hostName = "thinkpad";
@@ -26,7 +28,6 @@
 
   # Thinkpad-specific packages
   environment.systemPackages = with pkgs; [
-    firefox
     thinkfan
   ];
 
