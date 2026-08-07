@@ -6,6 +6,9 @@
 }:
 
 {
+  # Scratch module -- packages on probation. Remove this line to drop them all.
+  imports = [ ./test.nix ];
+
   # NOT for XWayland — that comes from programs.hyprland.xwayland.enable below
   # and xwayland-satellite (niri). This is here purely to satisfy SDDM's
   # assertion that one of services.xserver / sddm.wayland is enabled; we run the
@@ -104,6 +107,9 @@
     # File manager
     nautilus
 
+    # Image viewer
+    loupe
+
     # Cursor theme
     phinger-cursors
 
@@ -123,6 +129,22 @@
     # Audio control
     pavucontrol
   ];
+
+  # Default apps per MIME type (writes /etc/xdg/mimeapps.list).
+  # Without an entry here xdg-open picks whichever installed .desktop file
+  # claims the type first -- which is how PNGs ended up opening in GIMP.
+  xdg.mime.defaultApplications = {
+    "image/png" = "org.gnome.Loupe.desktop";
+    "image/jpeg" = "org.gnome.Loupe.desktop";
+    "image/gif" = "org.gnome.Loupe.desktop";
+    "image/webp" = "org.gnome.Loupe.desktop";
+    "image/bmp" = "org.gnome.Loupe.desktop";
+    "image/tiff" = "org.gnome.Loupe.desktop";
+    "image/avif" = "org.gnome.Loupe.desktop";
+    "image/svg+xml" = "org.gnome.Loupe.desktop";
+    "application/pdf" = "firefox.desktop";
+    "inode/directory" = "org.gnome.Nautilus.desktop";
+  };
 
   programs.localsend.openFirewall = true;
 

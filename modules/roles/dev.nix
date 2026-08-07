@@ -53,7 +53,6 @@
     # Networking tools
     dnsutils # dig, nslookup
     tcpdump
-    iperf3
     wireguard-tools
 
     # Media tools

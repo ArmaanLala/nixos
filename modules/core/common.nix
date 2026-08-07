@@ -20,6 +20,11 @@
   networking.networkmanager.enable = true;
   networking.firewall.enable = lib.mkDefault true;
 
+  # iperf3 -- 5201 is both the control channel (TCP) and the default data port,
+  # so UDP tests (-u) need the UDP side open too.
+  networking.firewall.allowedTCPPorts = [ 5201 ];
+  networking.firewall.allowedUDPPorts = [ 5201 ];
+
   services.avahi = {
     enable = true;
     nssmdns4 = true;
@@ -99,6 +104,7 @@
       ripgrep
       fd
       lazygit
+      delta # git pager, configured in programs.git below
       neovim
       tealdeer
       duf
@@ -178,6 +184,7 @@
     strace
     pciutils
     stow
+    iperf3
   ];
 
   # === Nix Settings ===
@@ -226,6 +233,27 @@
       credential.helper = "!gh auth git-credential";
       user.name = "Armaan Lala";
       user.email = "armaanlala@gmail.com";
+
+      # delta as the pager. It highlights changed words within a line by
+      # default, which is the readable version of --word-diff.
+      core.pager = "delta";
+      interactive.diffFilter = "delta --color-only";
+      delta = {
+        navigate = true; # n / N jump between files in the diff
+        line-numbers = true;
+        hyperlinks = true; # ghostty turns file:line into clickable links
+      };
+
+      # delta reads these to render moved blocks and conflicts properly.
+      diff.colorMoved = "default";
+      merge.conflictstyle = "zdiff3";
+
+      # Word/char granularity on demand, since delta's intra-line highlight
+      # doesn't replace every use of these.
+      alias = {
+        wdiff = "diff --word-diff=color";
+        cdiff = "diff --color-words=.";
+      };
     };
   };
 
