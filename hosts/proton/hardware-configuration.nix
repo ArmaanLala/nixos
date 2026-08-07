@@ -1,4 +1,3 @@
-# Proton hardware configuration
 { lib, ... }:
 
 {

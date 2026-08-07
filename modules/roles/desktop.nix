@@ -6,20 +6,17 @@
 }:
 
 {
-  # Scratch module -- packages on probation. Remove this line to drop them all.
+  # Scratch module -- see test.nix.
   imports = [ ./test.nix ];
 
-  # NOT for XWayland — that comes from programs.hyprland.xwayland.enable below
-  # and xwayland-satellite (niri). This is here purely to satisfy SDDM's
-  # assertion that one of services.xserver / sddm.wayland is enabled; we run the
-  # X11 greeter. Removing it means setting services.displayManager.sddm.wayland
-  # in the same commit.
+  # NOT for XWayland (that's programs.hyprland.xwayland / xwayland-satellite).
+  # Only here to satisfy SDDM's assertion that one of services.xserver /
+  # sddm.wayland is set; drop it only alongside sddm.wayland = true.
   services.xserver.enable = true;
 
   # publish.enable/addresses are already set in common.nix; desktops add this.
   services.avahi.publish.userServices = true;
 
-  # Display manager
   services.displayManager.sddm = {
     enable = true;
   };
@@ -31,10 +28,9 @@
     xwayland.enable = true;
   };
 
-  # Enable CUPS to print documents
   services.printing.enable = true;
 
-  # Enable sound with pipewire
+  # Pipewire
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -44,7 +40,7 @@
     pulse.enable = true;
   };
 
-  # Fonts (from lala-desktop)
+  # Fonts
   fonts.packages = with pkgs; [
     dejavu_fonts
     liberation_ttf
@@ -74,7 +70,6 @@
     opencode
   ];
 
-  # Desktop-specific user packages
   users.users.armaan.packages = with pkgs; [
     firefox
 
@@ -104,13 +99,8 @@
     vlc
     ffmpeg
 
-    # File manager
     nautilus
-
-    # Image viewer
     loupe
-
-    # Cursor theme
     phinger-cursors
 
     # Wayland compositor tools & utilities
@@ -125,14 +115,11 @@
     swaybg
     wl-clipboard
     udiskie
-
-    # Audio control
     pavucontrol
   ];
 
-  # Default apps per MIME type (writes /etc/xdg/mimeapps.list).
-  # Without an entry here xdg-open picks whichever installed .desktop file
-  # claims the type first -- which is how PNGs ended up opening in GIMP.
+  # Writes /etc/xdg/mimeapps.list. Without an entry, xdg-open picks whichever
+  # .desktop claims the type first -- which is how PNGs ended up opening in GIMP.
   xdg.mime.defaultApplications = {
     "image/png" = "org.gnome.Loupe.desktop";
     "image/jpeg" = "org.gnome.Loupe.desktop";
@@ -148,6 +135,5 @@
 
   programs.localsend.openFirewall = true;
 
-  # Polkit agent for authentication dialogs
   security.polkit.enable = true;
 }

@@ -20,8 +20,7 @@
   networking.networkmanager.enable = true;
   networking.firewall.enable = lib.mkDefault true;
 
-  # iperf3 -- 5201 is both the control channel (TCP) and the default data port,
-  # so UDP tests (-u) need the UDP side open too.
+  # iperf3: 5201 is control (TCP) and data, so UDP tests (-u) need UDP open too.
   networking.firewall.allowedTCPPorts = [ 5201 ];
   networking.firewall.allowedUDPPorts = [ 5201 ];
 
@@ -104,7 +103,7 @@
       ripgrep
       fd
       lazygit
-      delta # git pager, configured in programs.git below
+      delta # configured in programs.git below
       neovim
       tealdeer
       duf
@@ -121,7 +120,7 @@
       gh
 
       # Shell and terminal
-      # (fish itself comes from programs.fish.enable, which adds it to systemPackages)
+      # fish itself comes from programs.fish.enable
       tmux
       fastfetch
       starship
@@ -138,6 +137,44 @@
       KbdInteractiveAuthentication = false;
     };
   };
+
+  # Spliced into /etc/ssh/ssh_config ahead of the module's own `Host *` block,
+  # so anything here wins. First match per keyword wins, hence `Host *` last;
+  # short names resolve through `networking.hosts` above, not HostName lines.
+  # Non-NixOS clients (macbook) never get this -- copy to ~/.ssh/config there.
+  programs.ssh.extraConfig = ''
+    Host atlas proton lenix webster thinkpad drapion
+      User armaan
+
+    # Tailscale twins -- the bare names above are 10.0.0.x and hang off-LAN.
+    Host ts-* jumpbox
+      User armaan
+
+    Host truenas
+      User truenas_admin
+
+    Host pihole servarr seagate repoman
+      User armaan
+
+    Host dojo.pwn.college
+      User hacker
+
+    Host github.com
+      User git
+      # github disconnects after too many wrong key offers from the agent.
+      IdentitiesOnly yes
+
+    Host *
+      IdentityFile ~/.ssh/id_ed25519
+      # Reuse one connection per host. %C hashes the destination to keep the
+      # socket path under the ~104 char unix socket limit.
+      ControlMaster auto
+      ControlPath ~/.ssh/control-%C
+      ControlPersist 5m
+      # Ride out brief wifi drops and suspends instead of dropping the shell.
+      ServerAliveInterval 60
+      ServerAliveCountMax 3
+  '';
 
   # === Shell ===
   programs.bash.interactiveShellInit = ''
@@ -188,9 +225,8 @@
   ];
 
   # === Nix Settings ===
-  # `!include` (rather than `include`) is deliberate: per nix.conf(5) a missing
-  # file is only an error for `include`. Hosts that never had the token
-  # provisioned still evaluate. See docs/secrets.md.
+  # `!include` (not `include`) tolerates the file being absent, so unprovisioned
+  # hosts still evaluate. See docs/secrets.md.
   nix.extraOptions = ''
     !include /etc/nix/github-token.conf
   '';
@@ -215,9 +251,8 @@
     ];
   };
 
-  # Make ad-hoc `nix shell nixpkgs#foo` and `nix-shell -p` resolve to the exact
-  # nixpkgs this host was built from instead of fetching a different channel.
-  # pkgs.path is per-host correct: drapion gets unstable, everyone else 25.11.
+  # Make ad-hoc `nix shell nixpkgs#foo` / `nix-shell -p` use this host's own
+  # nixpkgs instead of fetching a channel. pkgs.path is per-host correct.
   nix.registry.nixpkgs.to = {
     type = "path";
     path = pkgs.path;
@@ -234,8 +269,7 @@
       user.name = "Armaan Lala";
       user.email = "armaanlala@gmail.com";
 
-      # delta as the pager. It highlights changed words within a line by
-      # default, which is the readable version of --word-diff.
+      # delta highlights changed words within a line by default.
       core.pager = "delta";
       interactive.diffFilter = "delta --color-only";
       delta = {
@@ -248,8 +282,8 @@
       diff.colorMoved = "default";
       merge.conflictstyle = "zdiff3";
 
-      # Word/char granularity on demand, since delta's intra-line highlight
-      # doesn't replace every use of these.
+      # Word/char granularity on demand, where delta's intra-line highlight
+      # isn't enough.
       alias = {
         wdiff = "diff --word-diff=color";
         cdiff = "diff --color-words=.";
@@ -265,11 +299,9 @@
   };
 
   # === Auto Upgrade ===
-  # Each host fetches the newest committed config straight from GitHub and
-  # rebuilds itself. This runs as root via nix (no local git checkout), so there
-  # are no file-ownership / "git pull needs root" problems. The autoUpgrade
-  # module adds --refresh automatically, so every run sees the latest commit.
-  # `persistent` catches up on missed runs if the host was powered off.
+  # Runs as root via nix with no local checkout, so no file-ownership /
+  # "git pull needs root" problems. The module adds --refresh automatically, so
+  # every run sees the latest commit. See README "Deploy model".
   system.autoUpgrade = {
     enable = true;
     flake = "github:ArmaanLala/nixos#${config.networking.hostName}";

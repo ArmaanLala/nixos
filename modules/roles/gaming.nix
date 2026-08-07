@@ -21,8 +21,6 @@
     mangohud
   ];
 
-  # User-scoped, matching where these lived before they moved out of
-  # desktop.nix and hosts/drapion.
   users.users.armaan.packages = with pkgs; [
     # Wine / Proton
     wineWow64Packages.waylandFull

@@ -11,7 +11,7 @@
     ../../modules/hardware/nfs.nix
   ];
 
-  # Roaming laptop — reach the NAS over the tailnet rather than the LAN.
+  # Roaming laptop — NAS over the tailnet.
   nfs.server = "ts-truenas";
   nfs.shares = {
     media = "arr";
@@ -21,12 +21,10 @@
 
   networking.hostName = "thinkpad";
 
-  # Fingerprint reader
   services.fprintd.enable = true;
   services.fprintd.tod.enable = true;
   services.fprintd.tod.driver = pkgs.libfprint-2-tod1-goodix;
 
-  # Thinkpad-specific packages
   environment.systemPackages = with pkgs; [
     thinkfan
   ];

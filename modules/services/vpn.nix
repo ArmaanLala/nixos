@@ -1,18 +1,13 @@
-# VPN namespace and the download client confined to it.
-#
-# NOT self-contained: `vpnNamespaces` is defined by vpn-confinement, which
-# flake.nix adds to atlas only. Importing this from a second host fails with
-# "option does not exist" — add vpn-confinement.nixosModules.default to that
-# host's module list in flake.nix too.
+# NOT self-contained: `vpnNamespaces` comes from vpn-confinement, which flake.nix
+# adds to atlas only. A second host importing this must get that module added in
+# flake.nix too, or evaluation fails with "option does not exist".
 { ... }:
 
 {
   vpnNamespaces.wg = {
     enable = true;
-    # Deliberately a quoted STRING, not a path literal. As a string it is
-    # interpolated into a runtime shell script, so the secret never enters
-    # /nix/store. As a bare path it fails evaluation on every host with
-    # "access to absolute path ... is forbidden in pure evaluation mode".
+    # Quoted STRING, not a path literal: as a string it is read at runtime so the
+    # secret stays out of /nix/store; a bare path fails pure evaluation.
     wireguardConfigFile = "/etc/nixos/secrets/proton.conf";
     accessibleFrom = [ "10.0.0.0/24" ];
     openVPNPorts = [

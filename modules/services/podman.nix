@@ -1,4 +1,3 @@
-# Podman container module
 { pkgs, ... }:
 
 {

@@ -1,5 +1,4 @@
-# QEMU/KVM guest integration. Safe for any VM, regardless of how its disks are
-# laid out — import this on every virtual host.
+# QEMU/KVM guest integration — safe on any VM; import on every virtual host.
 { modulesPath, ... }:
 
 {

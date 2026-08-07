@@ -6,8 +6,7 @@
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
-    # No `follows` for vpn-confinement: that flake declares no inputs at all, so
-    # an override would warn about a non-existent input on every evaluation.
+    # No `follows`: vpn-confinement declares no inputs, so an override warns every eval.
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -31,11 +30,17 @@
       pkgs = nixpkgs.legacyPackages.${system};
       treefmtEval = treefmt-nix.lib.evalModule pkgs ./lib/treefmt.nix;
 
-      specialArgs = { inherit pwndbg; };
+      # Cherry-pick individual packages from unstable on the 25.11 hosts, as
+      # `unstable.foo`. Instantiated once and shared; allowUnfree has to be
+      # repeated here because it is set on the host's own pkgs, not this one.
+      unstable = import nixpkgs-unstable {
+        inherit system;
+        config.allowUnfree = true;
+      };
+
+      specialArgs = { inherit pwndbg unstable; };
     in
     {
-      # Hosts pull the newest config from git and rebuild themselves via
-      # system.autoUpgrade (configured in modules/common.nix).
       nixosConfigurations = {
         atlas = nixpkgs.lib.nixosSystem {
           inherit system specialArgs;
@@ -68,7 +73,6 @@
           ];
         };
 
-        # drapion tracks unstable rather than the 25.11 release.
         drapion = nixpkgs-unstable.lib.nixosSystem {
           inherit system specialArgs;
           modules = [ ./hosts/drapion/configuration.nix ];
@@ -77,8 +81,7 @@
 
       formatter.${system} = treefmtEval.config.build.wrapper;
 
-      # Makes `nix flake check` fail on formatting drift instead of leaving
-      # `nix fmt` advisory. CI runs this alongside the per-host evaluations.
+      # Makes `nix flake check` fail on formatting drift, not just advise via `nix fmt`.
       checks.${system}.formatting = treefmtEval.config.build.check self;
     };
 }

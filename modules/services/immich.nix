@@ -9,11 +9,10 @@
     mediaLocation = "/mnt/immich/media";
   };
 
-  # mediaLocation lives on an NFS automount. Do NOT put an ordering dependency on
-  # systemd-tmpfiles-setup for this — it creates a cycle (tmpfiles-setup →
-  # sysinit → basic → NetworkManager-wait-online → network-online →
-  # mnt-immich.mount → tmpfiles-setup) that systemd breaks by dropping a job at
-  # random. Delaying immich itself is the safe place to wait.
+  # mediaLocation is on an NFS automount. Delay immich, not tmpfiles-setup —
+  # ordering tmpfiles after the mount cycles (tmpfiles → sysinit → basic →
+  # NetworkManager-wait-online → mnt-immich.mount → tmpfiles) and systemd breaks
+  # the cycle by dropping a job at random.
   systemd.services.immich-server = {
     after = [ "mnt-immich.mount" ];
     requires = [ "mnt-immich.mount" ];

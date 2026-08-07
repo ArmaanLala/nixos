@@ -1,4 +1,4 @@
-# webster - web server host
+# Webster - misc web services VM
 { ... }:
 
 {
@@ -14,8 +14,7 @@
   ];
 
   nfs.shares = {
-    # copyparty the service is gone, but its data is not — the share stays
-    # mounted so the files remain reachable.
+    # copyparty the service is gone; its data isn't — keep the share mounted.
     copyparty = "copyparty";
     manga = "manga";
   };
@@ -39,16 +38,14 @@
     openFirewall = true;
   };
 
-  # Vaultwarden. TLS is terminated by Cloudflare and the tunnel daemon runs on a
-  # separate VM, so this listens on the LAN rather than loopback.
+  # TLS terminates at Cloudflare and the tunnel runs on another VM, so this
+  # binds the LAN, not loopback.
   services.vaultwarden = {
     enable = true;
-    # Sets DOMAIN = "https://vault.armaanlala.tech" — used for invite/reset links
-    # and as the WebAuthn origin, so it must match the Cloudflare hostname exactly.
+    # WebAuthn origin — must match the Cloudflare hostname exactly.
     domain = "vault.armaanlala.tech";
     backupDir = "/var/local/vaultwarden/backup";
-    # ADMIN_TOKEN (and any SMTP secrets) live here rather than in the nix store.
-    # Nothing provisions this file — it must be created by hand on the host.
+    # ADMIN_TOKEN etc., created by hand on the host — see docs/secrets.md.
     environmentFile = "/var/lib/vaultwarden/vaultwarden.env";
     config = {
       SIGNUPS_ALLOWED = false;

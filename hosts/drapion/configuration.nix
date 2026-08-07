@@ -1,5 +1,4 @@
-# Drapion - Desktop workstation with AMD GPU
-# Hardware: Ryzen 7 7800X3D, AMD GPU, 1.8TB NVMe (btrfs)
+# Drapion - workstation: Ryzen 7800X3D, RX 7900 XTX, 1.8TB NVMe (btrfs)
 { pkgs, lib, ... }:
 
 {
@@ -25,22 +24,16 @@
   networking.hostName = "drapion";
   services.udisks2.enable = true;
 
-  # Drapion uses systemd-boot (default from common.nix). The btrfs root is a
-  # stock nixos-generate-config hardware file with a by-uuid device — there is
-  # no disko in this repo.
-
-  # AMD GPU (ROCm bits live in services/ollama.nix)
+  # ROCm bits live in modules/services/ollama.nix
   services.xserver.videoDrivers = [ "amdgpu" ];
   hardware.amdgpu.opencl.enable = true;
 
-  # Bluetooth
   services.blueman.enable = true;
   hardware.bluetooth = {
     enable = true;
     powerOnBoot = false;
   };
 
-  # Drapion-specific packages
   environment.systemPackages = with pkgs; [
     calibre
     gimp3
@@ -59,7 +52,7 @@
 
   services.openssh.settings.PasswordAuthentication = lib.mkForce true;
 
-  # QMK/VIA/Vial udev rules for keyboard firmware
+  # Keyboard firmware flashing needs these udev rules
   services.udev.packages = with pkgs; [
     qmk
     qmk-udev-rules

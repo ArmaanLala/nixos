@@ -1,24 +1,18 @@
-# Ollama with ROCm acceleration on an AMD GPU.
-#
-# Single-consumer module (drapion) — the render node below is that machine's
-# discrete card. Parameterise it if a second GPU host ever appears.
+# Ollama with ROCm. Drapion-only: the render node ordering below is hardcoded to
+# that machine's card — parameterise it if a second GPU host appears.
 { pkgs, lib, ... }:
 
 {
   services.ollama = {
-    package = pkgs.ollama-rocm; # package selects the ROCm backend
+    package = pkgs.ollama-rocm;
     enable = true;
     host = "[::]";
   };
 
-  # ollama probes for GPUs once at startup and lives with whatever it found.
-  # At boot it used to beat amdgpu to the punch: /dev/kfd was up but the DRM
-  # render node ROCm needs to enumerate an HSA agent appeared ~1s later, so
-  # discovery came up empty and the server ran on CPU until it was restarted.
-  # Ordering after display-manager/graphical.target is not enough — the DM is
-  # "started" ~100ms before the render node exists. Wait on the device itself.
-  # udev doesn't tag DRM nodes for systemd by default, which is what leaves
-  # dev-dri-renderD128.device inactive and useless for ordering; hence the rule.
+  # ollama probes for GPUs once at startup: at boot it used to beat the DRM
+  # render node by ~1s, find nothing, and silently run on CPU until restarted.
+  # display-manager ordering is ~100ms too early, so wait on the device — and
+  # udev doesn't tag DRM nodes for systemd by default, hence this rule.
   services.udev.extraRules = ''
     SUBSYSTEM=="drm", KERNEL=="renderD*", TAG+="systemd"
   '';

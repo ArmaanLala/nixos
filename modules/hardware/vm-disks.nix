@@ -1,7 +1,6 @@
-# Generic label-based disk layout for VMs built from the standard image.
-#
-# Import this INSTEAD of a hardware-configuration.nix. Hosts that were installed
-# with their own generated hardware config (proton) import only vm-guest.nix.
+# Label-based disk layout for VMs built from the standard image. Import INSTEAD
+# of a hardware-configuration.nix; hosts with a generated one (proton) take only
+# vm-guest.nix.
 { lib, ... }:
 
 {

@@ -1,7 +1,5 @@
-# Suwayomi manga server, plus the Flaresolverr instance it proxies through.
-#
-# Needs a container backend — import services/podman.nix alongside this. Also
-# expects the `manga` NFS share, which holds the download library.
+# Needs services/podman.nix (container backend) and the `manga` NFS share
+# (download library) imported alongside it.
 { ... }:
 
 {

@@ -1,4 +1,3 @@
-# libvirt/QEMU virtualisation host with virt-manager.
 { ... }:
 
 {

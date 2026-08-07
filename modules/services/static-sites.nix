@@ -1,8 +1,5 @@
-# Static sites served straight off disk by nginx.
-#
-# Content lives OUTSIDE this repo in /var/www/<name> and is published by the
-# deploy.sh in each source project (~/pptnight, ~/givememoney). nginx serves the
-# files live, so updating a site needs no rebuild — just rsync.
+# Content lives outside this repo in /var/www/<name>. nginx serves it live, so
+# updating a site is an rsync, not a rebuild.
 { config, lib, ... }:
 let
   cfg = config.staticSites;
@@ -14,9 +11,8 @@ in
       alpd.port = 8417;
     };
     description = ''
-      Static sites to serve, keyed by name. Each one gets its web root created,
-      an nginx virtual host on its port, and that port opened in the firewall —
-      previously three hand-maintained lists.
+      Static sites to serve, keyed by name. Each entry gets its web root created,
+      an nginx virtual host on its port, and that port opened in the firewall.
     '';
     type = lib.types.attrsOf (
       lib.types.submodule (
@@ -55,8 +51,7 @@ in
           }
         ];
         locations."/".root = site.root;
-        # Never serve dotfiles/dirs (.claude, .git, ...) even though the web
-        # root is the source project's working directory.
+        # Web roots are rsync'd project dirs, so block dotfiles (.git, .claude).
         locations."~ /\\.".return = 404;
       }) cfg;
     };

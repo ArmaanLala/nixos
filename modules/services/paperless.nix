@@ -1,9 +1,6 @@
-# Paperless-ngx document server.
-#
-# The admin password is the bootstrap credential only — it is applied on every
-# activation, so changing it in the web UI is undone on the next rebuild. Change
-# it here instead. There is no openFirewall option in the upstream module, hence
-# the explicit port.
+# The admin password is re-applied on every activation, so changing it in the web
+# UI is undone on the next rebuild — change it here. The upstream module has no
+# openFirewall, hence the explicit port.
 { ... }:
 
 {

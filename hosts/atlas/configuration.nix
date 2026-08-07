@@ -1,4 +1,4 @@
-# Atlas - unified media server (*arr stack, sabnzbd)
+# Atlas - media server (*arr stack, VPN-confined sabnzbd)
 { ... }:
 
 {

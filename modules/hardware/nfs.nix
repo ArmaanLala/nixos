@@ -1,4 +1,3 @@
-# Consolidated NFS mount configuration
 { config, lib, ... }:
 let
   mkNfsMount = device: {
@@ -34,11 +33,9 @@ in
         games = "games";
       };
       description = ''
-        Shares under wdblue, as { mountName = shareName; }. Each entry mounts
-        /mnt/''${mountName} from ''${server}:/mnt/wdblue/''${shareName}.
-
-        The two names are deliberately separate because they do not always
-        match: /mnt/media is wdblue/arr and /mnt/buzz is wdblue/phub.
+        Shares under wdblue, as { mountName = shareName; }. The two names are
+        deliberately separate because they do not always match: /mnt/media is
+        wdblue/arr and /mnt/buzz is wdblue/phub.
       '';
     };
   };

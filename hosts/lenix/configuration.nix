@@ -1,4 +1,4 @@
-# Lenix - Physical machine with Immich, Jellyfin and Paperless
+# Lenix - bare metal; Jellyfin, Immich, Paperless
 { ... }:
 
 {
@@ -18,7 +18,7 @@
     media = "arr";
   };
 
-  # Override common.nix bootloader - lenix uses GRUB on /dev/sda (legacy BIOS)
+  # Legacy BIOS — GRUB on /dev/sda, not the systemd-boot default.
   boot.loader.systemd-boot.enable = false;
   boot.loader.efi.canTouchEfiVariables = false;
   boot.loader.grub.enable = true;
