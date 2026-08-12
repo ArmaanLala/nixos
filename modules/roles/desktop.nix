@@ -14,6 +14,8 @@
   # sddm.wayland is set; drop it only alongside sddm.wayland = true.
   services.xserver.enable = true;
 
+  services.fwupd.enable = true;
+
   # publish.enable/addresses are already set in common.nix; desktops add this.
   services.avahi.publish.userServices = true;
 

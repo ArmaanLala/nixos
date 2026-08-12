@@ -7,6 +7,7 @@
     ../../modules/hardware/nfs.nix
     ../../modules/hardware/vm-guest.nix
     ../../modules/hardware/vm-disks.nix
+    ../../modules/services/nextcloud.nix
     ../../modules/services/open-webui.nix
     ../../modules/services/podman.nix
     ../../modules/services/static-sites.nix

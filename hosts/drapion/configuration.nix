@@ -14,6 +14,7 @@
   ];
 
   nfs.shares = {
+    buzz = "phub";
     games = "games";
     immich = "immich";
     media = "arr";

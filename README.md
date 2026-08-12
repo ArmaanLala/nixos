@@ -5,14 +5,14 @@ Flake-based NixOS configuration for six machines. Lives at
 
 ## Hosts
 
-| Host       | Channel  | Role                                                                        | Hardware                       |
-| ---------- | -------- | --------------------------------------------------------------------------- | ------------------------------ |
-| `atlas`    | 25.11    | \*arr stack, VPN-confined sabnzbd                                           | generic VM (label disks)       |
-| `proton`   | 25.11    | Jellyfin                                                                    | VM, own hardware config        |
-| `lenix`    | 25.11    | Jellyfin + Immich                                                           | bare metal, GRUB/BIOS          |
-| `webster`  | 25.11    | copyparty, vikunja, actual, open-webui, suwayomi, vaultwarden, static sites | generic VM                     |
-| `thinkpad` | 25.11    | laptop desktop                                                              | ThinkPad X1 Yoga 7th gen       |
-| `drapion`  | unstable | workstation, Ollama/ROCm, libvirt                                           | Ryzen 7800X3D + AMD GPU, btrfs |
+| Host       | Channel  | Role                                                                                   | Hardware                       |
+| ---------- | -------- | -------------------------------------------------------------------------------------- | ------------------------------ |
+| `atlas`    | 25.11    | \*arr stack, VPN-confined sabnzbd                                                      | generic VM (label disks)       |
+| `proton`   | 25.11    | Jellyfin                                                                               | VM, own hardware config        |
+| `lenix`    | 25.11    | Jellyfin + Immich                                                                      | bare metal, GRUB/BIOS          |
+| `webster`  | 25.11    | copyparty, vikunja, actual, open-webui, suwayomi, vaultwarden, nextcloud, static sites | generic VM                     |
+| `thinkpad` | 25.11    | laptop desktop                                                                         | ThinkPad X1 Yoga 7th gen       |
+| `drapion`  | unstable | workstation, Ollama/ROCm, libvirt                                                      | Ryzen 7800X3D + AMD GPU, btrfs |
 
 `drapion` deliberately tracks `nixos-unstable`; everything else tracks the 25.11
 release. `system.stateVersion` differs per host (25.05 vs 25.11) — that records
