@@ -12,6 +12,9 @@
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
     pwndbg.url = "github:pwndbg/pwndbg";
     pwndbg.inputs.nixpkgs.follows = "nixpkgs";
+    # No `follows`: overriding nixpkgs changes the derivation hash and defeats
+    # the Cachix binary cache that's the whole point of using this flake.
+    claude-code.url = "github:sadjow/claude-code-nix";
   };
 
   outputs =
@@ -23,6 +26,7 @@
       vpn-confinement,
       treefmt-nix,
       pwndbg,
+      claude-code,
       ...
     }:
     let
@@ -38,7 +42,7 @@
         config.allowUnfree = true;
       };
 
-      specialArgs = { inherit pwndbg unstable; };
+      specialArgs = { inherit pwndbg unstable claude-code; };
     in
     {
       nixosConfigurations = {
@@ -73,7 +77,7 @@
           ];
         };
 
-        drapion = nixpkgs-unstable.lib.nixosSystem {
+        drapion = nixpkgs.lib.nixosSystem {
           inherit system specialArgs;
           modules = [ ./hosts/drapion/configuration.nix ];
         };

@@ -6,8 +6,8 @@ start. A freshly installed host is silently degraded until these exist.
 
 | Secret                                 | Hosts   | Consumed by                       | Missing-file behaviour               |
 | -------------------------------------- | ------- | --------------------------------- | ------------------------------------ |
-| `/etc/nixos/secrets/proton.conf`       | atlas   | `modules/vpn.nix`                 | VPN namespace fails to come up       |
-| `/etc/nix/github-token.conf`           | all     | `modules/common.nix`              | Tolerated — see below                |
+| `/etc/nixos/secrets/proton.conf`       | atlas   | `modules/services/vpn.nix`        | VPN namespace fails to come up       |
+| `/etc/nix/github-token.conf`           | all     | `modules/core/common.nix`         | Tolerated — see below                |
 | `/var/lib/vaultwarden/vaultwarden.env` | webster | `hosts/webster/configuration.nix` | `vaultwarden.service` fails to start |
 
 ## ProtonVPN config (atlas)
@@ -26,7 +26,7 @@ absolute path ... is forbidden in pure evaluation mode`.
 
 ## GitHub token (all hosts)
 
-Raises the GitHub API rate limit for flake fetches. `modules/common.nix` pulls it
+Raises the GitHub API rate limit for flake fetches. `modules/core/common.nix` pulls it
 in with:
 
 ```
@@ -58,17 +58,24 @@ all — systemd treats a missing `EnvironmentFile` as fatal.
    nix run nixpkgs#vaultwarden -- hash
    ```
 
-2. Write it on webster, single-quoted so the `$` in the PHC string survives:
+2. Write it on webster, single-quoted so the `$` in the PHC string survives the
+   shell. The login shell here is fish, which has no heredoc — pipe instead:
 
    ```
    sudo install -d -m 0700 /var/lib/vaultwarden
-   sudo tee /var/lib/vaultwarden/vaultwarden.env >/dev/null <<'EOF'
-   ADMIN_TOKEN='$argon2id$v=19$m=65540,t=3,p=4$...'
-   EOF
+   echo 'ADMIN_TOKEN=$argon2id$v=19$m=65540,t=3,p=4$...' \
+     | sudo tee /var/lib/vaultwarden/vaultwarden.env >/dev/null
    sudo chmod 600 /var/lib/vaultwarden/vaultwarden.env
    ```
 
-3. Log in at `https://vault.armaanlala.tech/admin` with the **plaintext** token
+   The value needs no quotes inside the file itself; systemd strips surrounding
+   quotes when it parses `EnvironmentFile=`, and does no `$` expansion.
+
+3. `sudo systemctl reset-failed vaultwarden && sudo systemctl start vaultwarden`.
+   The `reset-failed` matters: a unit that already hit the start-limit stays
+   refused (`Start request repeated too quickly`) even once the file exists.
+
+4. Log in at `https://vault.armaanlala.tech/admin` with the **plaintext** token
    and invite your own account. Keep the plaintext in a password manager — it
    cannot be recovered from the hash.
 

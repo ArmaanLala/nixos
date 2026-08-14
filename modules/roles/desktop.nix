@@ -2,6 +2,7 @@
 {
   pkgs,
   lib,
+  claude-code,
   ...
 }:
 
@@ -68,6 +69,8 @@
     xdg-desktop-portal-hyprland
     xdg-desktop-portal-gtk
     xwayland-satellite
+    # no hypridle: services.hypridle (pulled in by programs.hyprlock.enable in
+    # test.nix) already installs the package and its systemd user unit.
     # bottles # temporarily disabled - patool tests failing on python 3.14
     opencode
   ];
@@ -79,7 +82,6 @@
     ghostty
     alacritty
 
-    localsend
     caligula
 
     # System monitoring
@@ -92,7 +94,11 @@
     vulkan-tools
 
     # Desktop applications
-    claude-code
+    # The flake's own output, not its overlay: the overlay is
+    # `final.callPackage`, which rebuilds against our nixpkgs and misses the
+    # Cachix cache the no-`follows` input exists for. Matches the pwndbg
+    # pattern in dev.nix.
+    claude-code.packages.x86_64-linux.default
 
     obs-studio
     kicad
@@ -104,14 +110,15 @@
     nautilus
     loupe
     phinger-cursors
+    papirus-icon-theme
 
     # Wayland compositor tools & utilities
     waybar
     quickshell
     fuzzel
     swaylock
-    mako
     dunst
+    libnotify
     playerctl
     brightnessctl
     swaybg
@@ -135,7 +142,13 @@
     "inode/directory" = "org.gnome.Nautilus.desktop";
   };
 
-  programs.localsend.openFirewall = true;
+  # openFirewall (port 53317, TCP+UDP) only takes effect when the module itself
+  # is enabled — the module also installs the package, so don't add it to
+  # users.users.armaan.packages as well.
+  programs.localsend = {
+    enable = true;
+    openFirewall = true;
+  };
 
   security.polkit.enable = true;
 }
