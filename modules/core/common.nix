@@ -5,7 +5,65 @@
   pkgs,
   ...
 }:
+let
+  # Wakes drapion through the NanoKVM, which is the only always-on box that sits
+  # on 10.0.0.0/24 and can therefore put a magic packet on the wire at all.
+  #
+  # No-op when drapion is already up, so it is safe to call unconditionally --
+  # that is what lets the ProxyCommand below wrap every `ssh drapion`.
+  wake-drapion = pkgs.writeShellScriptBin "wake-drapion" ''
+    set -u
 
+    MAC=d8:43:ae:45:60:68
+    DRAPION=10.0.0.183
+    # LAN address first (direct path), tailnet second so this still works
+    # off-site. The KVM is reachable both ways.
+    KVM_ADDRS="10.0.0.18 100.111.67.1"
+
+    up() {
+      ${pkgs.coreutils}/bin/timeout 2 \
+        ${pkgs.bash}/bin/bash -c "echo >/dev/tcp/$1/22" 2>/dev/null
+    }
+
+    if [ "''${1:-}" != "--force" ] && up "$DRAPION"; then
+      exit 0
+    fi
+
+    kvm=""
+    for a in $KVM_ADDRS; do
+      if up "$a"; then
+        kvm=$a
+        break
+      fi
+    done
+    if [ -z "$kvm" ]; then
+      echo "wake-drapion: cannot reach the KVM on any of: $KVM_ADDRS" >&2
+      exit 1
+    fi
+
+    # etherwake puts a raw 0x0842 frame straight onto eth0. `wakeonlan` also
+    # works but routes through the IP stack, and on this box it chose wlan0 --
+    # the raw frame takes the interface out of the equation.
+    ${pkgs.openssh}/bin/ssh -n -o BatchMode=yes -o ConnectTimeout=5 \
+      -o StrictHostKeyChecking=accept-new \
+      root@"$kvm" "etherwake -i eth0 $MAC" || exit 1
+    echo "wake-drapion: magic packet sent via $kvm" >&2
+
+    # S3 resume plus sshd is normally well under a minute; cap the wait so a
+    # failed wake surfaces as an error instead of hanging the caller forever.
+    n=0
+    while [ $n -lt 60 ]; do
+      if up "$DRAPION"; then
+        echo "wake-drapion: drapion is up" >&2
+        exit 0
+      fi
+      ${pkgs.coreutils}/bin/sleep 2
+      n=$((n + 1))
+    done
+    echo "wake-drapion: no response from drapion after 120s" >&2
+    exit 1
+  '';
+in
 {
   # === Boot & System ===
   boot.loader.systemd-boot.enable = lib.mkDefault true;
@@ -16,9 +74,33 @@
   i18n.defaultLocale = "en_US.UTF-8";
 
   # === Networking ===
-  services.tailscale.enable = true;
+  services.tailscale = {
+    enable = true;
+    # Without this tailscaled shoves 100.100.100.100 into resolvconf at a higher
+    # priority than NetworkManager on every start/reconnect, so pihole
+    # (10.0.0.222) never wins and local DNS breaks. MagicDNS names aren't needed
+    # -- the tailnet IPs are pinned in `networking.hosts` below.
+    # extraUpFlags would be a no-op here; it only runs with an authKeyFile.
+    extraSetFlags = [ "--accept-dns=false" ];
+  };
   networking.networkmanager.enable = true;
   networking.firewall.enable = lib.mkDefault true;
+
+  # Pin pihole ahead of whatever DHCP hands out, so DNS doesn't depend on the
+  # router advertising it. openresolv `name_servers` prepends to the dynamic
+  # list; the DHCP-provided servers still follow as fallback. No public resolver
+  # is appended on purpose -- if pihole is down DNS should fail loudly rather
+  # than quietly resolving around the ad-blocking.
+  #
+  # `networking.nameservers` is NOT the option for this: in nixpkgs it only
+  # feeds the networkd/dhcpcd paths and is never read by config/resolvconf.nix,
+  # so under NetworkManager + resolvconf it silently does nothing.
+  #
+  # mkDefault so roaming hosts can drop the pin -- 10.0.0.222 is unreachable
+  # off-LAN and would stall every fresh lookup until it times out.
+  networking.resolvconf.extraConfig = lib.mkDefault ''
+    name_servers='10.0.0.222'
+  '';
 
   # iperf3: 5201 is control (TCP) and data, so UDP tests (-u) need UDP open too.
   networking.firewall.allowedTCPPorts = [ 5201 ];
@@ -52,6 +134,7 @@
     "10.0.0.160" = [ "truenas" ];
     "10.0.0.174" = [ "atlas" ];
 
+    "10.0.0.18" = [ "kvm" ];
     "10.0.0.183" = [ "drapion" ];
     "10.0.0.186" = [ "lenix" ];
     "10.0.0.200" = [ "hydra" ];
@@ -66,6 +149,7 @@
     "100.90.169.115" = [ "ts-atlas" ];
 
     "100.99.14.97" = [ "ts-drapion" ];
+    "100.111.67.1" = [ "ts-kvm" ];
     "100.106.33.35" = [ "iphone" ];
     "100.106.156.10" = [ "ts-lenix" ];
     "100.112.154.50" = [ "ts-nyx" ];
@@ -143,6 +227,22 @@
   # short names resolve through `networking.hosts` above, not HostName lines.
   # Non-NixOS clients (macbook) never get this -- copy to ~/.ssh/config there.
   programs.ssh.extraConfig = ''
+    # drapion suspends on an idle timer and its NIC sleeps with it, so a plain
+    # ssh would just time out. `Match exec` runs the wake as a side effect while
+    # parsing the config, then ssh connects directly -- unlike a ProxyCommand it
+    # keeps nc out of the data path entirely.
+    #
+    # wake-drapion no-ops when the host is already up, so the usual cost is one
+    # 2s TCP probe. The block must precede the group below: first match per
+    # keyword wins, and a failed wake falls through to it for User.
+    Match host drapion exec "${wake-drapion}/bin/wake-drapion"
+      User armaan
+
+    # The NanoKVM. Its web UI has its own separate account -- these are the
+    # system credentials, and root is the only user on the device.
+    Host kvm ts-kvm
+      User root
+
     Host atlas proton lenix webster thinkpad drapion
       User armaan
 
@@ -205,6 +305,7 @@
 
   # === Packages ===
   environment.systemPackages = with pkgs; [
+    wake-drapion
     vim
     git
     wget

@@ -21,6 +21,11 @@
 
   networking.hostName = "thinkpad";
 
+  # Opt out of common.nix's pinned pihole nameserver. This one roams, and
+  # 10.0.0.222 is unreachable off-LAN -- every fresh lookup would block on it
+  # until timeout before falling through. Plain "" beats the mkDefault there.
+  networking.resolvconf.extraConfig = "";
+
   services.fprintd.enable = true;
   services.fprintd.tod.enable = true;
   services.fprintd.tod.driver = pkgs.libfprint-2-tod1-goodix;

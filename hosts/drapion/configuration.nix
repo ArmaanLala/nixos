@@ -9,6 +9,8 @@
     ../../modules/roles/desktop.nix
     ../../modules/roles/dev.nix
     ../../modules/roles/gaming.nix
+    ../../modules/roles/pwn
+    ../../modules/roles/stm.nix
     ../../modules/services/libvirt.nix
     ../../modules/services/ollama.nix
   ];
@@ -24,6 +26,15 @@
 
   networking.hostName = "drapion";
   services.udisks2.enable = true;
+
+  # hypridle suspends to S3 after 20 min, which powers the NIC down and takes
+  # SSH and tailscale with it. Arming the RTL8125's magic-packet filter lets a
+  # `wol`/`etherwake` from truenas or lenix bring drapion back before we ssh in.
+  networking.interfaces.enp14s0.wakeOnLan.enable = true;
+
+  # NetworkManager reapplies link settings on every (re)connect and would clear
+  # the flag the wakeOnLan unit sets at boot. 64 = NM_SETTING_WIRED_WAKE_ON_LAN_MAGIC.
+  networking.networkmanager.settings.connection."ethernet.wake-on-lan" = 64;
 
   # ROCm bits live in modules/services/ollama.nix
   services.xserver.videoDrivers = [ "amdgpu" ];
@@ -41,10 +52,12 @@
     sbctl
     discord
     claude-code
+    ethtool
     grimblast
     quickemu
     godot
     arduino-ide
+    freecad
     koboldcpp
     hashcat
   ];
