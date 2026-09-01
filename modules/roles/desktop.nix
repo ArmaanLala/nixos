@@ -15,8 +15,12 @@ let
   sessions = config.services.displayManager.sessionData.desktops;
 in
 {
-  # Scratch module -- see test.nix.
-  imports = [ ./test.nix ];
+  # Scratch module -- see test.nix. idle.nix owns the blank/lock/suspend
+  # timers and the desktop.autoSuspend switch drapion flips off.
+  imports = [
+    ./idle.nix
+    ./test.nix
+  ];
 
   # No services.xserver.enable: greetd runs on the TTY, so nothing needs an X
   # server any more. XWayland is unaffected -- that's programs.hyprland.xwayland
@@ -49,29 +53,6 @@ in
       "--remember-user-session" # ...and reselect that user's last session
       "--sessions ${sessions}/share/wayland-sessions:${sessions}/share/xsessions"
     ];
-  };
-
-  # Idle handling *at the greeter*. hypridle only exists inside a logged-in
-  # compositor; tuigreet is a TUI on tty1, so the timers come from the kernel
-  # (blank) and logind (suspend) instead.
-  #
-  # The kernel default is 0 (never blank). Only keyboard input resets the timer
-  # -- console *output* doesn't -- so tuigreet's --time clock redrawing once a
-  # second doesn't hold the screen on. fbcon passes the blank down to the DRM
-  # driver, which drops the CRTC, so the monitor generally sleeps rather than
-  # just going black. Applies to VTs only: a compositor holding DRM master
-  # never sees it.
-  boot.kernelParams = [ "consoleblank=300" ];
-
-  # IdleAction fires when every idle-capable session is idle. Greeter sessions
-  # count (systemd's SESSION_CLASS_CAN_IDLE includes them) and are type=tty, so
-  # "idle" means the atime of /dev/tty1, i.e. actual keystrokes. Graphical
-  # sessions are judged by an explicit idle hint that neither niri nor Hyprland
-  # sets, so this cannot fire under a live desktop -- hypridle still owns that.
-  # Idle tty/ssh logins do count, and `systemd-inhibit --what=idle` blocks it.
-  services.logind.settings.Login = {
-    IdleAction = "suspend";
-    IdleActionSec = "15min";
   };
 
   # Wayland compositors
@@ -121,26 +102,6 @@ in
     xdg-desktop-portal-gtk
     xwayland-satellite
 
-    # hypridle's suspend, wrapped so it never drops a live SSH session.
-    #
-    # The waiting has to happen inside this script: hypridle fires on-timeout
-    # once per idle period and never retries, so simply declining to suspend
-    # would leave the box awake until someone touched it locally.
-    #
-    # hyprlock doubles as the idle proxy. The 5-min listener locked the session,
-    # so hyprlock still running means nobody has come back to the machine. Once
-    # it exits the user has unlocked, this timeout is stale, and suspending now
-    # would pull the desktop out from under them.
-    (writeShellScriptBin "idle-suspend" ''
-      while ${procps}/bin/pidof hyprlock >/dev/null 2>&1; do
-        # sport matches inbound sessions only -- our own outbound ssh to other
-        # hosts lands on dport and must not hold this machine awake.
-        if [ -z "$(${iproute2}/bin/ss -H -t state established '( sport = :ssh )')" ]; then
-          exec ${systemd}/bin/systemctl suspend
-        fi
-        ${coreutils}/bin/sleep 60
-      done
-    '')
     # no hypridle: services.hypridle (pulled in by programs.hyprlock.enable in
     # test.nix) already installs the package and its systemd user unit.
     # bottles # temporarily disabled - patool tests failing on python 3.14

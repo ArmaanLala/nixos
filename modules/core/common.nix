@@ -227,10 +227,11 @@ in
   # short names resolve through `networking.hosts` above, not HostName lines.
   # Non-NixOS clients (macbook) never get this -- copy to ~/.ssh/config there.
   programs.ssh.extraConfig = ''
-    # drapion suspends on an idle timer and its NIC sleeps with it, so a plain
-    # ssh would just time out. `Match exec` runs the wake as a side effect while
-    # parsing the config, then ssh connects directly -- unlike a ProxyCommand it
-    # keeps nc out of the data path entirely.
+    # drapion no longer idle-suspends (desktop.idleSuspend = false), but when it
+    # is off for any other reason its NIC is asleep and a plain ssh would just
+    # time out. `Match exec` runs the wake as a side effect while parsing the
+    # config, then ssh connects directly -- unlike a ProxyCommand it keeps nc
+    # out of the data path entirely.
     #
     # wake-drapion no-ops when the host is already up, so the usual cost is one
     # 2s TCP probe. The block must precede the group below: first match per

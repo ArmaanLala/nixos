@@ -27,9 +27,17 @@
   networking.hostName = "drapion";
   services.udisks2.enable = true;
 
-  # hypridle suspends to S3 after 20 min, which powers the NIC down and takes
-  # SSH and tailscale with it. Arming the RTL8125's magic-packet filter lets a
-  # `wol`/`etherwake` from truenas or lenix bring drapion back before we ssh in.
+  # Never suspend on its own: S3 powers the NIC down and takes SSH and tailscale
+  # with it, and this box is the one we ssh *into* -- recovering it means
+  # walking over or firing a magic packet from another host. Displays still
+  # blank and the session still locks on hypridle's timers. Suspending by hand
+  # is still fine; that one is a decision, not a surprise.
+  # See modules/roles/idle.nix.
+  desktop.autoSuspend = false;
+
+  # Still arm the RTL8125's magic-packet filter. Nothing suspends the box any
+  # more, but a deliberate poweroff (or a crash) still needs a `wol`/`etherwake`
+  # from truenas or lenix to bring it back before we ssh in.
   networking.interfaces.enp14s0.wakeOnLan.enable = true;
 
   # NetworkManager reapplies link settings on every (re)connect and would clear
