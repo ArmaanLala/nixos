@@ -14,15 +14,12 @@ users:
     plain_text_passwd: pwn
     ssh_authorized_keys:
       - "@SSH_PUBKEY@"
-
 ssh_pwauth: false
 package_update: true
-
 # Runs before the package stage, so the i386 packages below resolve in the same
 # apt transaction rather than needing a second update+install pass.
 bootcmd:
   - dpkg --add-architecture i386
-
 packages:
   - build-essential
   - gcc-multilib
@@ -66,17 +63,14 @@ packages:
   - neovim
   - ncurses-term
   - stow
-
 # virtiofs tags are set by pwnvm's --filesystem target.dir
 mounts:
   - [pwnshare, /home/armaan/pwn, virtiofs, "defaults,nofail", "0", "0"]
-
 write_files:
   # ASLR on by default so local runs match a typical remote; flip with `aslr off`.
   - path: /etc/sysctl.d/99-pwn-aslr.conf
     content: |
       kernel.randomize_va_space = 2
-
   - path: /usr/local/bin/aslr
     permissions: "0755"
     content: |
@@ -100,7 +94,6 @@ write_files:
           esac ;;
         *) echo "usage: aslr [on|off|status]" >&2; exit 1 ;;
       esac
-
   # Lives in /etc/fish rather than ~/.config/fish/conf.d because the latter is a
   # symlink into the stowed dotfiles repo, so it would follow you to the host.
   # conf.d is read by non-interactive shells too, so the PATH below also covers
@@ -123,14 +116,12 @@ write_files:
           and test -d "$HOME/pwn"
           builtin cd "$HOME/pwn"
       end
-
   # Only reached by root, `sudo -i` and bash scripts - armaan's login shell is
   # fish, which is served by the conf.d file above.
   - path: /etc/profile.d/pwn.sh
     content: |
       # pwntools et al live in a venv so we do not fight PEP 668.
       export PATH="/opt/pwnenv/bin:/opt/glibc-all-in-one:$PATH"
-
   # Readable vsyscall page - something only the VM can give you, since the host
   # kernel is built LEGACY_VSYSCALL_XONLY.
   #
@@ -140,7 +131,6 @@ write_files:
   - path: /etc/default/grub.d/99-pwn.cfg
     content: |
       GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT vsyscall=emulate"
-
   # pwndbg is a gdb plugin, and upstream's setup.sh only wires up ~/.gdbinit -
   # it installs no launcher. The NixOS host has a real `pwndbg` command from
   # nixpkgs, so provide the same entry point here rather than making the VM the
@@ -155,7 +145,6 @@ write_files:
         exec gdb "$@"
       fi
       exec gdb -q -ex "source /opt/pwndbg/gdbinit.py" "$@"
-
   - path: /usr/local/bin/pwn-dotfiles
     permissions: "0755"
     content: |
@@ -196,7 +185,6 @@ write_files:
       stow -d "$DOT" -t "$HOME" --restow --adopt .
       git -C "$DOT" checkout -- . || true
       echo "dotfiles stowed"
-
   # write_files runs in the init stage, *before* users_groups creates armaan, so
   # an owner: here fails with "Unknown user or group". defer moves this one to
   # write_files_deferred in the final stage, after the user exists.
@@ -207,47 +195,36 @@ write_files:
     content: |
       source /opt/pwndbg/gdbinit.py
       set debuginfod enabled on
-
 runcmd:
   # --no-cache-dir: angr and z3 alone leave a few hundred MB of wheels behind in
   # an image that is never going to reinstall them.
   - python3 -m venv /opt/pwnenv
   - /opt/pwnenv/bin/pip install --no-cache-dir pwntools ROPgadget ropper capstone unicorn angr
-
   - gem install --no-document one_gadget seccomp-tools
-
   - git clone --depth 1 https://github.com/pwndbg/pwndbg /opt/pwndbg
   - (cd /opt/pwndbg && ./setup.sh --update)
-
   # Fetches Ubuntu glibc builds (libc + ld + debug symbols) for any version a
   # challenge targets - this is what makes heap work tractable.
   - git clone --depth 1 https://github.com/matrix1001/glibc-all-in-one /opt/glibc-all-in-one
   - (cd /opt/glibc-all-in-one && ./update_list)
-
   # runcmd is root, but both of these are written to as armaan: pwndbg updates
   # venv state on startup and glibc-all-in-one downloads into its own libs/.
   # Leaving them root-owned makes gdb fail with EACCES on first launch.
   # /opt/pwnenv is deliberately not included - nothing writes into it at
   # runtime, and it is by far the largest tree of the three.
   - chown -R armaan:armaan /opt/pwndbg /opt/glibc-all-in-one
-
   - update-grub
-
   # Ubuntu renames these to avoid conflicts; config.fish's `alias cat=bat` and
   # the usual `fd` muscle memory both want the real names.
   - ln -sf /usr/bin/batcat /usr/local/bin/bat
   - ln -sf /usr/bin/fdfind /usr/local/bin/fd
-
   # Not in apt; the prompt is worth one download (config.fish guards on it).
   - curl -fsSL https://starship.rs/install.sh | sh -s -- --yes
-
   - runuser -u armaan -- /usr/local/bin/pwn-dotfiles
   - chsh -s /usr/bin/fish armaan
-
   # Safety net only: pwn-dotfiles already ran as armaan and .gdbinit carries an
   # owner:, so this normally matches nothing. -xdev keeps it out of the virtiofs
   # share, and ! -user avoids touching ctimes (and so COWing the overlay) on the
   # ~1200 files of the dotfiles repo for no reason.
   - find /home/armaan -xdev ! -user armaan -exec chown armaan:armaan {} +
-
 final_message: "pwnbox ready after $UPTIME seconds. Reboot once for vsyscall=emulate."

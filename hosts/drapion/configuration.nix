@@ -4,6 +4,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./disko.nix
     ../../modules/core/common.nix
     ../../modules/hardware/nfs.nix
     ../../modules/roles/desktop.nix
@@ -27,22 +28,44 @@
   networking.hostName = "drapion";
   services.udisks2.enable = true;
 
-  # Never suspend on its own: S3 powers the NIC down and takes SSH and tailscale
-  # with it, and this box is the one we ssh *into* -- recovering it means
-  # walking over or firing a magic packet from another host. Displays still
-  # blank and the session still locks on hypridle's timers. Suspending by hand
-  # is still fine; that one is a decision, not a surprise.
-  # See modules/roles/idle.nix.
-  desktop.autoSuspend = false;
+  # Was `configurationLimit = 3` while the ESP was 127M and shared with Windows
+  # -- that is what filled /boot on 2026-09-05 and broke the bootloader install
+  # mid-copy. hosts/drapion/disko.nix now declares a 1G ESP, so the override is
+  # gone and common.nix's default of 5 applies again.
+  #
+  # Kept as a note because the failure was non-obvious: the unit of cost is a
+  # distinct (kernel, initrd) PAIR, not a distinct kernel version. Generations
+  # 234/235/236 were all Linux 6.18.49 yet held two bzImages and two initrds,
+  # because the initrd is rebuilt on any initrd-relevant config change and the
+  # bzImage on any nixpkgs bump.
 
-  # Still arm the RTL8125's magic-packet filter. Nothing suspends the box any
-  # more, but a deliberate poweroff (or a crash) still needs a `wol`/`etherwake`
-  # from truenas or lenix to bring it back before we ssh in.
-  networking.interfaces.enp14s0.wakeOnLan.enable = true;
+  # 2026-09-05: the 25.11 -> 26.05 bump flipped boot.initrd.systemd.enable to
+  # true and that doubled the initrd -- the scripted one was 34M unpacked /
+  # 14.2M in the ESP, the systemd one is 81M / 27.9M, because it drags in full
+  # systemd (18M), openssl (8.6M), btrfs-progs (6.6M), tpm2-tss (3.6M) and lvm2
+  # (2.8M). Setting it back to false was what made three generations fit in a
+  # 94M ESP.
+  #
+  # That override is GONE now: disko.nix gives this host a 4G ESP, so 27.9M per
+  # generation is noise, and eval warns that the scripted initrd is deprecated
+  # and scheduled for removal in 26.11. Taking the default (true) now means not
+  # being forced onto it later. Nothing here depended on the scripted path --
+  # no LUKS, no TPM unlock, no impermanence, plain btrfs root.
 
-  # NetworkManager reapplies link settings on every (re)connect and would clear
-  # the flag the wakeOnLan unit sets at boot. 64 = NM_SETTING_WIRED_WAKE_ON_LAN_MAGIC.
-  networking.networkmanager.settings.connection."ethernet.wake-on-lan" = 64;
+  # 2026-09-05: chasing a Navi31 GPU hang. CS2's VKRenderThread wedges
+  # gfx_0.0.0; the driver's first move is a surgical per-ring reset routed
+  # through the MES firmware, but MES stops answering:
+  #
+  #   MES failed to respond to msg=RESET
+  #   reset via MES failed and try pipe reset -110   (-110 = ETIMEDOUT)
+  #   Ring gfx_0.0.0 reset failed
+  #
+  # so it escalates to a full device reset, which loses VRAM and kills every
+  # GPU context on the box -- including the compositor's. Taking the unified
+  # MES path out is an attempt to let the ring reset actually land, so a hung
+  # game dies alone instead of taking the desktop with it. This does NOT stop
+  # the hang itself. Logs in ~/gpu-debug/. Drop this line if it doesn't help.
+  boot.kernelParams = [ "amdgpu.uni_mes=0" ];
 
   # ROCm bits live in modules/services/ollama.nix
   services.xserver.videoDrivers = [ "amdgpu" ];

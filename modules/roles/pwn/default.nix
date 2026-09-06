@@ -26,8 +26,9 @@ let
       openssh
       ncurses # infocmp, for the terminfo sync
     ];
-    text = builtins.replaceStrings [ "@CLOUD_INIT@" ] [ "${./cloud-init.yaml}" ]
-      (builtins.readFile ./pwnvm.sh);
+    text = builtins.replaceStrings [ "@CLOUD_INIT@" ] [ "${./cloud-init.yaml}" ] (
+      builtins.readFile ./pwnvm.sh
+    );
   };
 
   # Throwaway Ubuntu userland. Uses a dedicated home (~/pwn) rather than the
@@ -96,13 +97,22 @@ in
     # dev.nix also puts a bare `python3` in this profile and the collision is
     # resolved by merge order; hiPrio makes this one win, so `import pwn` works
     # on the host.
-    (lib.hiPrio (python3.withPackages (ps: with ps; [
-      pwntools
-      ropgadget
-      ropper
-      capstone
-      unicorn
-      angr
-    ])))
+    (lib.hiPrio (
+      python3.withPackages (
+        ps: with ps; [
+          pwntools
+          ropgadget
+          ropper
+          capstone
+          unicorn
+          # angr: broken in nixpkgs 26.05 and unstable as of 2026-09-03 -- angr
+          # 9.2.193's setup.py raises "angr requires setuptools-rust to build" and
+          # the nixpkgs expression still has `build-system = [ setuptools ]`.
+          # Fixing it properly needs rustPlatform + a cargoDeps vendor hash.
+          # Re-enable once nixpkgs carries the fix.
+          # angr
+        ]
+      )
+    ))
   ];
 }

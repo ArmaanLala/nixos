@@ -2,12 +2,14 @@
   description = "NixOS configurations for all hosts";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
     # No `follows`: vpn-confinement declares no inputs, so an override warns every eval.
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
     pwndbg.url = "github:pwndbg/pwndbg";
@@ -23,6 +25,7 @@
       nixpkgs,
       nixpkgs-unstable,
       nixos-hardware,
+      disko,
       vpn-confinement,
       treefmt-nix,
       pwndbg,
@@ -79,7 +82,10 @@
 
         drapion = nixpkgs.lib.nixosSystem {
           inherit system specialArgs;
-          modules = [ ./hosts/drapion/configuration.nix ];
+          modules = [
+            disko.nixosModules.disko
+            ./hosts/drapion/configuration.nix
+          ];
         };
       };
 

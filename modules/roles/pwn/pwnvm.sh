@@ -31,9 +31,12 @@ CLOUD_INIT=@CLOUD_INIT@
 # surviving master would silently serve sessions from the previous machine.
 # (This is what makes `chsh` in the guest look like it did not take.)
 SSH_OPTS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
-          -o LogLevel=ERROR -o ControlPath=none)
+  -o LogLevel=ERROR -o ControlPath=none)
 
-die() { echo "pwnvm: $*" >&2; exit 1; }
+die() {
+  echo "pwnvm: $*" >&2
+  exit 1
+}
 info() { echo "==> $*"; }
 
 exists() { virsh -c "$URI" dominfo "$VM" >/dev/null 2>&1; }
@@ -43,15 +46,18 @@ running() { [ "$(virsh -c "$URI" domstate "$VM" 2>/dev/null)" = "running" ]; }
 # the cloud image ships but leaves inactive, so that query always fails and just
 # costs a wasted libvirt round trip per poll.
 vm_ip() {
-  virsh -c "$URI" -q domifaddr "$VM" --source lease 2>/dev/null \
-    | awk '$4 ~ /\./ {sub("/.*", "", $4); print $4; exit}'
+  virsh -c "$URI" -q domifaddr "$VM" --source lease 2>/dev/null |
+    awk '$4 ~ /\./ {sub("/.*", "", $4); print $4; exit}'
 }
 
 wait_for_ip() {
   local ip i
   for ((i = ${1:-60}; i > 0; i--)); do
     ip=$(vm_ip)
-    [ -n "$ip" ] && { echo "$ip"; return 0; }
+    [ -n "$ip" ] && {
+      echo "$ip"
+      return 0
+    }
     sleep 2
   done
   return 1
@@ -62,7 +68,10 @@ wait_for_ip() {
 # gets one burns the timeout twice over.
 VM_IP=""
 ensure_ip() {
-  [ -n "$VM_IP" ] && { echo "$VM_IP"; return 0; }
+  [ -n "$VM_IP" ] && {
+    echo "$VM_IP"
+    return 0
+  }
   running || cmd_start
   VM_IP=$(wait_for_ip 60) || die "could not determine IP"
   echo "$VM_IP"
@@ -81,9 +90,11 @@ cmd_create() {
   fi
 
   info "building cloud-init seed"
-  local tmp; tmp=$(mktemp -d); trap 'rm -rf "$tmp"' RETURN
-  sed "s|@SSH_PUBKEY@|$(cat "$HOME/.ssh/id_ed25519.pub")|" "$CLOUD_INIT" > "$tmp/user-data"
-  printf 'instance-id: %s\nlocal-hostname: %s\n' "$VM-$(date +%s)" "$VM" > "$tmp/meta-data"
+  local tmp
+  tmp=$(mktemp -d)
+  trap 'rm -rf "$tmp"' RETURN
+  sed "s|@SSH_PUBKEY@|$(cat "$HOME/.ssh/id_ed25519.pub")|" "$CLOUD_INIT" >"$tmp/user-data"
+  printf 'instance-id: %s\nlocal-hostname: %s\n' "$VM-$(date +%s)" "$VM" >"$tmp/meta-data"
   cloud-localds "$tmp/seed.iso" "$tmp/user-data" "$tmp/meta-data"
 
   info "provisioning disk ($DISK_SIZE)"
@@ -113,7 +124,8 @@ cmd_create() {
     --noautoconsole
 
   info "waiting for boot"
-  local ip; ip=$(wait_for_ip 90) || die "no DHCP lease; try 'pwnvm console'"
+  local ip
+  ip=$(wait_for_ip 90) || die "no DHCP lease; try 'pwnvm console'"
   sync_terminfo "$ip"
   cat <<EOF
 
@@ -136,8 +148,11 @@ cmd_start() {
   # domstate fails outright for an undefined domain, so it answers both
   # "does it exist" and "is it running" in one call.
   case "$(virsh -c "$URI" domstate "$VM" 2>/dev/null)" in
-    running) info "already running"; return ;;
-    "")      die "no such VM; run 'pwnvm create'" ;;
+  running)
+    info "already running"
+    return
+    ;;
+  "") die "no such VM; run 'pwnvm create'" ;;
   esac
   virsh -c "$URI" start "$VM" >/dev/null
   VM_IP=$(wait_for_ip 60) || true
@@ -145,13 +160,17 @@ cmd_start() {
 }
 
 cmd_stop() {
-  running || { info "not running"; return; }
+  running || {
+    info "not running"
+    return
+  }
   virsh -c "$URI" shutdown "$VM" >/dev/null
   info "shutdown signalled"
 }
 
 cmd_ssh() {
-  local ip; ip=$(ensure_ip) || exit 1
+  local ip
+  ip=$(ensure_ip) || exit 1
   exec ssh "${SSH_OPTS[@]}" "armaan@$ip" "$@"
 }
 
@@ -167,7 +186,8 @@ sync_terminfo() {
 }
 
 ssh_to() {
-  local ip="$1"; shift
+  local ip="$1"
+  shift
   # SC2029: remote-side expansion is what we want here - callers pass literal
   # commands to run in the guest, not host-local paths.
   # shellcheck disable=SC2029
@@ -179,22 +199,27 @@ cmd_sync() {
   # Needs a key loaded on the host: ssh-add ~/.ssh/id_ed25519
   local agent=() remote_env=""
   if [ "${1:-}" = "-A" ]; then agent=(-A) remote_env="PWN_DOTFILES_SSH=1 "; fi
-  local ip; ip=$(ensure_ip) || exit 1
+  local ip
+  ip=$(ensure_ip) || exit 1
   # One connection for both: `tic` reads stdin to EOF and exits, so the dotfiles
   # run can follow it rather than paying a second handshake (ControlPath=none
   # means there is no multiplexing to fall back on).
   # shellcheck disable=SC2029
-  infocmp -x "${TERM:-xterm-256color}" 2>/dev/null \
-    | ssh "${agent[@]}" "${SSH_OPTS[@]}" "armaan@$ip" \
-        "tic -x - 2>/dev/null; ${remote_env}/usr/local/bin/pwn-dotfiles"
+  infocmp -x "${TERM:-xterm-256color}" 2>/dev/null |
+    ssh "${agent[@]}" "${SSH_OPTS[@]}" "armaan@$ip" \
+      "tic -x - 2>/dev/null; ${remote_env}/usr/local/bin/pwn-dotfiles"
 }
 
 cmd_ip() { vm_ip; }
 cmd_console() { exec virsh -c "$URI" console "$VM"; }
 
 cmd_status() {
-  local state; state=$(virsh -c "$URI" domstate "$VM" 2>/dev/null) \
-    || { echo "not created"; return; }
+  local state
+  state=$(virsh -c "$URI" domstate "$VM" 2>/dev/null) ||
+    {
+      echo "not created"
+      return
+    }
   printf 'state   %s\n' "$state"
   printf 'ip      %s\n' "$(vm_ip)"
   printf 'share   %s (same path in guest)\n' "$SHARE"
@@ -203,7 +228,10 @@ cmd_status() {
 cmd_destroy() {
   exists || die "no such VM"
   read -rp "destroy $VM and its disk? ($SHARE is untouched) [y/N] " a
-  [ "$a" = y ] || { echo "aborted"; return; }
+  [ "$a" = y ] || {
+    echo "aborted"
+    return
+  }
   running && virsh -c "$URI" destroy "$VM" >/dev/null
   # No --nvram/--remove-all-storage: the domain is BIOS-booted so there is no
   # NVRAM, and the rm below already covers the disk. $BACKING is shared with
@@ -213,7 +241,10 @@ cmd_destroy() {
   info "destroyed"
 }
 
-cmd_rebuild() { cmd_destroy; cmd_create; }
+cmd_rebuild() {
+  cmd_destroy
+  cmd_create
+}
 
 usage() {
   cat <<EOF
@@ -236,11 +267,16 @@ EOF
 }
 
 case "${1:-}" in
-  create|start|stop|ssh|sync|console|ip|status|destroy|rebuild)
-    cmd=$1; shift
-    # `pwnvm ssh -- <cmd>` reads better than `pwnvm ssh <cmd>`; accept both.
-    if [ "$cmd" = ssh ] && [ "${1:-}" = -- ]; then shift; fi
-    "cmd_$cmd" "$@" ;;
-  ""|-h|--help|help) usage ;;
-  *) usage; exit 1 ;;
+create | start | stop | ssh | sync | console | ip | status | destroy | rebuild)
+  cmd=$1
+  shift
+  # `pwnvm ssh -- <cmd>` reads better than `pwnvm ssh <cmd>`; accept both.
+  if [ "$cmd" = ssh ] && [ "${1:-}" = -- ]; then shift; fi
+  "cmd_$cmd" "$@"
+  ;;
+"" | -h | --help | help) usage ;;
+*)
+  usage
+  exit 1
+  ;;
 esac

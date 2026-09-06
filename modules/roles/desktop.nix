@@ -15,12 +15,32 @@ let
   sessions = config.services.displayManager.sessionData.desktops;
 in
 {
-  # Scratch module -- see test.nix. idle.nix owns the blank/lock/suspend
-  # timers and the desktop.autoSuspend switch drapion flips off.
+  # Scratch module -- see test.nix.
   imports = [
-    ./idle.nix
     ./test.nix
   ];
+
+  # Idle handling *at the greeter*. hypridle only exists inside a logged-in
+  # compositor; tuigreet is a TUI on tty1, so the blank timer comes from the
+  # kernel instead. The kernel default is 0 (never blank). Only keyboard input
+  # resets it -- console *output* doesn't -- so tuigreet's --time clock
+  # redrawing once a second doesn't hold the screen on. fbcon passes the blank
+  # down to the DRM driver, which drops the CRTC, so the monitor generally
+  # sleeps rather than just going black. Applies to VTs only: a compositor
+  # holding DRM master never sees it.
+  boot.kernelParams = [ "consoleblank=300" ];
+
+  # Explicitly *not* suspend, which is the easy one to miss: IdleAction fires
+  # when every idle-capable session is idle, and greeter sessions and idle SSH
+  # logins both count -- enough to suspend the box out from under an ssh user
+  # with no desktop involved. Nothing here auto-suspends; hypridle's timers
+  # blank the displays and lock the session, and suspending stays a deliberate
+  # act (power menu, sleep key, `systemctl suspend`).
+  #
+  # logind only re-reads this on reload, which `nixos-rebuild switch` does not
+  # do -- `systemctl reload systemd-logind` after a change (reload, not
+  # restart: a restart takes the graphical session with it).
+  services.logind.settings.Login.IdleAction = "ignore";
 
   # No services.xserver.enable: greetd runs on the TTY, so nothing needs an X
   # server any more. XWayland is unaffected -- that's programs.hyprland.xwayland

@@ -5,70 +5,21 @@
   pkgs,
   ...
 }:
-let
-  # Wakes drapion through the NanoKVM, which is the only always-on box that sits
-  # on 10.0.0.0/24 and can therefore put a magic packet on the wire at all.
-  #
-  # No-op when drapion is already up, so it is safe to call unconditionally --
-  # that is what lets the ProxyCommand below wrap every `ssh drapion`.
-  wake-drapion = pkgs.writeShellScriptBin "wake-drapion" ''
-    set -u
-
-    MAC=d8:43:ae:45:60:68
-    DRAPION=10.0.0.183
-    # LAN address first (direct path), tailnet second so this still works
-    # off-site. The KVM is reachable both ways.
-    KVM_ADDRS="10.0.0.18 100.111.67.1"
-
-    up() {
-      ${pkgs.coreutils}/bin/timeout 2 \
-        ${pkgs.bash}/bin/bash -c "echo >/dev/tcp/$1/22" 2>/dev/null
-    }
-
-    if [ "''${1:-}" != "--force" ] && up "$DRAPION"; then
-      exit 0
-    fi
-
-    kvm=""
-    for a in $KVM_ADDRS; do
-      if up "$a"; then
-        kvm=$a
-        break
-      fi
-    done
-    if [ -z "$kvm" ]; then
-      echo "wake-drapion: cannot reach the KVM on any of: $KVM_ADDRS" >&2
-      exit 1
-    fi
-
-    # etherwake puts a raw 0x0842 frame straight onto eth0. `wakeonlan` also
-    # works but routes through the IP stack, and on this box it chose wlan0 --
-    # the raw frame takes the interface out of the equation.
-    ${pkgs.openssh}/bin/ssh -n -o BatchMode=yes -o ConnectTimeout=5 \
-      -o StrictHostKeyChecking=accept-new \
-      root@"$kvm" "etherwake -i eth0 $MAC" || exit 1
-    echo "wake-drapion: magic packet sent via $kvm" >&2
-
-    # S3 resume plus sshd is normally well under a minute; cap the wait so a
-    # failed wake surfaces as an error instead of hanging the caller forever.
-    n=0
-    while [ $n -lt 60 ]; do
-      if up "$DRAPION"; then
-        echo "wake-drapion: drapion is up" >&2
-        exit 0
-      fi
-      ${pkgs.coreutils}/bin/sleep 2
-      n=$((n + 1))
-    done
-    echo "wake-drapion: no response from drapion after 120s" >&2
-    exit 1
-  '';
-in
 {
   # === Boot & System ===
   boot.loader.systemd-boot.enable = lib.mkDefault true;
+
+  # 2026-09-05: without this, systemd-boot keeps a kernel+initrd pair in the ESP
+  # for every generation and eventually fills it -- on drapion that meant a hard
+  # `No space left on device` mid-bootloader-install, which aborts the switch and
+  # leaves a half-copied .tmp behind. Note the installer writes entries for EVERY
+  # generation in the system profile, so a too-full ESP keeps failing until old
+  # generations are actually deleted, not just skipped.
+  # drapion's ESP is only 127M and a single 6.18.49 kernel+initrd is ~41M, so it
+  # fits about three distinct kernel builds. The real fix is a bigger ESP.
+  boot.loader.systemd-boot.configurationLimit = lib.mkDefault 5;
   boot.loader.efi.canTouchEfiVariables = lib.mkDefault true;
-  boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
+  boot.kernelPackages = lib.mkDefault pkgs.linuxPackages;
 
   time.timeZone = lib.mkDefault "America/Los_Angeles";
   i18n.defaultLocale = "en_US.UTF-8";
@@ -171,6 +122,12 @@ in
   users.users.armaan = {
     isNormalUser = true;
     description = "Armaan Lala";
+    # Pinned, not auto-allocated. Without this the uid comes from
+    # /var/lib/nixos/uid-map, which is state -- so a reinstall onto an empty
+    # disk is free to hand out a different number, and every file restored from
+    # a backup with --numeric-owner then belongs to a uid that no longer exists.
+    # users.groups.armaan.gid above was already pinned for the same reason.
+    uid = 1000;
     extraGroups = [
       "networkmanager"
       "wheel"
@@ -227,18 +184,6 @@ in
   # short names resolve through `networking.hosts` above, not HostName lines.
   # Non-NixOS clients (macbook) never get this -- copy to ~/.ssh/config there.
   programs.ssh.extraConfig = ''
-    # drapion no longer idle-suspends (desktop.idleSuspend = false), but when it
-    # is off for any other reason its NIC is asleep and a plain ssh would just
-    # time out. `Match exec` runs the wake as a side effect while parsing the
-    # config, then ssh connects directly -- unlike a ProxyCommand it keeps nc
-    # out of the data path entirely.
-    #
-    # wake-drapion no-ops when the host is already up, so the usual cost is one
-    # 2s TCP probe. The block must precede the group below: first match per
-    # keyword wins, and a failed wake falls through to it for User.
-    Match host drapion exec "${wake-drapion}/bin/wake-drapion"
-      User armaan
-
     # The NanoKVM. Its web UI has its own separate account -- these are the
     # system credentials, and root is the only user on the device.
     Host kvm ts-kvm
@@ -306,7 +251,6 @@ in
 
   # === Packages ===
   environment.systemPackages = with pkgs; [
-    wake-drapion
     vim
     git
     wget
