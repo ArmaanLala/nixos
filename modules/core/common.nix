@@ -6,6 +6,8 @@
   ...
 }:
 {
+  imports = [ ./sops.nix ];
+
   # === Boot & System ===
   boot.loader.systemd-boot.enable = lib.mkDefault true;
 

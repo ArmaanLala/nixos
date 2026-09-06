@@ -1,0 +1,27 @@
+# Which age keys can decrypt which secret files.
+#
+# Host keys come from `ssh webster 'cat /etc/ssh/ssh_host_ed25519_key.pub' | ssh-to-age`.
+# `armaan` is the personal key in ~/.config/sops/age/keys.txt on the workstation
+# (needed to edit any secret).
+#
+# After changing keys or rules, re-encrypt existing files:
+#   sops updatekeys secrets/<file>
+keys:
+  - &armaan age1en8mgaefycf2tg2yap89ah9a0ucawjlsuuzq4yv4en5hag6gp5fskfwmd7
+  - &webster age1rdp8ppaqkaczqgdn6xlpgkunwfjx3dvsd2868gdn67j4ujzw4gns5damxg
+  - &atlas age1gcw89yv6mawft5hgfn2vz4x7pmpel06tgpspa4jmkggqy793eeesapdnsy
+  - &proton age1q828a3a3zy2nhexepjsdlmcfqc6lwhzmmjtnsnw4rd8a5x2st50qrc4p00
+  - &lenix age1w2mpmzqpwt05sgte0f89k82kyg7e7wh46cjyr05zy9shcqt0lfpsqvpqrw
+creation_rules:
+  # Secrets more than one host needs.
+  - path_regex: secrets/common\.yaml$
+    key_groups:
+      - age: [*armaan, *webster, *atlas, *proton, *lenix]
+  # webster-only: microbin admin password, trumpet-snipes GroupMe token.
+  - path_regex: secrets/webster\.yaml$
+    key_groups:
+      - age: [*armaan, *webster]
+  # atlas-only: ProtonVPN WireGuard config.
+  - path_regex: secrets/atlas\.yaml$
+    key_groups:
+      - age: [*armaan, *atlas]

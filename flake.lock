@@ -39,6 +39,22 @@
         "type": "github"
       }
     },
+    "microbin-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1751837441,
+        "narHash": "sha256-eOY/rUP9kS4LwKkvAmO+qBubPhhr/K1n3v3+tKa4voU=",
+        "owner": "ArmaanLala",
+        "repo": "microbin",
+        "rev": "5ffe0b8ec6b9a614bb079a3572ece48ea0c69f3d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ArmaanLala",
+        "repo": "microbin",
+        "type": "github"
+      }
+    },
     "nixos-hardware": {
       "inputs": {
         "nixpkgs": [
@@ -185,12 +201,68 @@
       "inputs": {
         "claude-code": "claude-code",
         "disko": "disko",
+        "microbin-src": "microbin-src",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_2",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "pwndbg": "pwndbg",
+        "site-seth": "site-seth",
+        "site-trumpet-snipes": "site-trumpet-snipes",
+        "sops-nix": "sops-nix",
         "treefmt-nix": "treefmt-nix",
         "vpn-confinement": "vpn-confinement"
+      }
+    },
+    "site-seth": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1719179429,
+        "narHash": "sha256-1qkMejhlKxZ/8lCMuIHrLJQOKnQpz+4au56P6Eon1Fw=",
+        "owner": "ArmaanLala",
+        "repo": "seth",
+        "rev": "6e263b814fbcde2ccdf097dff827c62a323fcbd0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ArmaanLala",
+        "repo": "seth",
+        "type": "github"
+      }
+    },
+    "site-trumpet-snipes": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1713584814,
+        "narHash": "sha256-nAYTU0Qr6VOxkEsEH51fGSQNWG4f/QJGm64uWH3rWSQ=",
+        "owner": "ArmaanLala",
+        "repo": "trumpet-snipes",
+        "rev": "2b79484c93898ed470fa9a3cc4f3e7a433323472",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ArmaanLala",
+        "repo": "trumpet-snipes",
+        "type": "github"
+      }
+    },
+    "sops-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788337237,
+        "narHash": "sha256-gkSH8VUtCo6hnysNmb9DbTuDepH2t5pv+QWjP75xKAk=",
+        "owner": "Mic92",
+        "repo": "sops-nix",
+        "rev": "fbf759290e0cb0a98dfc813a4eb7d53ad1dacb57",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Mic92",
+        "repo": "sops-nix",
+        "type": "github"
       }
     },
     "systems": {
