@@ -26,13 +26,13 @@ straight from GitHub and rebuilds itself:
 ```nix
 system.autoUpgrade = {
   flake = "github:ArmaanLala/nixos#${config.networking.hostName}";
-  dates = "Sat *-*-* 03:00:00";
+  dates = "*-*-* 03:00:00";   # daily, +45min jitter
   allowReboot = false;
 };
 ```
 
 The practical consequence: **uncommitted local edits are invisible to the fleet,
-and get reverted on the next Saturday run.** Push before relying on a local
+and get reverted on the next daily run.** Push before relying on a local
 rebuild.
 
 Manual rebuild:
@@ -40,6 +40,9 @@ Manual rebuild:
 ```
 sudo nixos-rebuild switch --flake /etc/nixos#<hostname>
 ```
+
+Or trigger the upgrade unit immediately (same flake ref + `--refresh` as the
+timer): `scripts/nixup` — restarts `nixos-upgrade.service` and tails its log.
 
 ## Layout
 

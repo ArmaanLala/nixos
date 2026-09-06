@@ -365,7 +365,7 @@
   system.autoUpgrade = {
     enable = true;
     flake = "github:ArmaanLala/nixos#${config.networking.hostName}";
-    dates = "Sat *-*-* 03:00:00";
+    dates = "*-*-* 03:00:00";
     randomizedDelaySec = "45min";
     persistent = true;
     allowReboot = false;

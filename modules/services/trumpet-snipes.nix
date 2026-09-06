@@ -67,13 +67,13 @@ in
     };
   };
 
+  # Also runnable on demand: `systemctl start trumpet-snipes-json` (scripts/trumpet).
   systemd.timers.trumpet-snipes-json = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
-      # The old crontab schedule wasn't kept -- hourly is a guess, adjust freely.
-      OnCalendar = "hourly";
+      OnCalendar = "*:0/30";
       Persistent = true;
-      RandomizedDelaySec = "5m";
+      RandomizedDelaySec = "2m";
     };
   };
 }
