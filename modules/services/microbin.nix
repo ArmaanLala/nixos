@@ -96,8 +96,14 @@ in
       MICROBIN_WIDE = false;
       MICROBIN_QR = true;
 
-      MICROBIN_THREADS = 1;
-      MICROBIN_DISABLE_UPDATE_CHECKING = false;
+      MICROBIN_THREADS = 2;
+
+      # The /admin update check calls https://api.microbin.eu/version/ with a
+      # no-timeout client (src/util/version.rs). That host is unreachable from
+      # webster, so leaving this on hangs the admin page indefinitely.
+      MICROBIN_DISABLE_UPDATE_CHECKING = true;
+      # Also posts to api.microbin.eu; the module defaults it on, pinned here.
+      MICROBIN_DISABLE_TELEMETRY = true;
     };
   };
 
