@@ -17,4 +17,7 @@
     "*.json"
     "*.md"
   ];
+
+  # sops-encrypted files: reformatting them would break the MAC.
+  settings.global.excludes = [ "secrets/*" ];
 }

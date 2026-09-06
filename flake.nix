@@ -17,10 +17,35 @@
     # No `follows`: overriding nixpkgs changes the derivation hash and defeats
     # the Cachix binary cache that's the whole point of using this flake.
     claude-code.url = "github:sadjow/claude-code-nix";
+
+    # Encrypted secrets committed to this repo; decrypted on each host at
+    # activation with a key derived from its SSH host key. See docs/secrets.md.
+    sops-nix.url = "github:Mic92/sops-nix";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Static-site content, served straight from the store on webster (see
+    # modules/services/static-sites.nix). `flake = false` -- these are plain
+    # source trees, no build. Update a site: push to its repo, then
+    # `nix flake update site-<name>`.
+    site-seth = {
+      url = "github:ArmaanLala/seth";
+      flake = false;
+    };
+    site-trumpet-snipes = {
+      url = "github:ArmaanLala/trumpet-snipes";
+      flake = false;
+    };
+
+    # Armaan's microbin fork (upstream master + a custom colour scheme). Built
+    # from source by modules/services/microbin.nix.
+    microbin-src = {
+      url = "github:ArmaanLala/microbin";
+      flake = false;
+    };
   };
 
   outputs =
-    {
+    inputs@{
       self,
       nixpkgs,
       nixpkgs-unstable,
@@ -45,7 +70,14 @@
         config.allowUnfree = true;
       };
 
-      specialArgs = { inherit pwndbg unstable claude-code; };
+      specialArgs = {
+        inherit
+          inputs
+          pwndbg
+          unstable
+          claude-code
+          ;
+      };
     in
     {
       nixosConfigurations = {

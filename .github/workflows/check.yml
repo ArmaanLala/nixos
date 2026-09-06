@@ -26,6 +26,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          # webster's eval pulls the private site-seth / site-trumpet-snipes
+          # flake inputs. FLAKE_PRIVATE_TOKEN is a repo secret: a PAT with `repo`
+          # scope. The built-in GITHUB_TOKEN can't read other private repos.
+          extra-conf: |
+            access-tokens = github.com=${{ secrets.FLAKE_PRIVATE_TOKEN }}
       - name: Evaluate ${{ matrix.host }}
         # Evaluation alone catches the realistic failures — options renamed by a
         # flake update, typo'd attributes, missing imports — with no build
@@ -39,5 +45,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          # Needed to lock the private flake inputs before the check builds.
+          extra-conf: |
+            access-tokens = github.com=${{ secrets.FLAKE_PRIVATE_TOKEN }}
       - name: Check treefmt formatting
         run: nix build --no-link .#checks.x86_64-linux.formatting

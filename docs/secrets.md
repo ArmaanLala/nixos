@@ -1,91 +1,133 @@
 # Secrets Management
 
-Nothing here is in the repo, and nothing here is provisioned automatically. Each
-file has to be placed on the host by hand before the service that needs it will
-start. A freshly installed host is silently degraded until these exist.
+Most secrets live **encrypted in this repo** under `secrets/`, managed with
+[sops-nix](https://github.com/Mic92/sops-nix). Each host decrypts the ones meant
+for it at activation, using an age key derived from its own SSH host key — so
+nothing is copied to hosts by hand, and `system.autoUpgrade` delivers secret
+changes along with everything else.
 
-| Secret                                 | Hosts   | Consumed by                       | Missing-file behaviour               |
-| -------------------------------------- | ------- | --------------------------------- | ------------------------------------ |
-| `/etc/nixos/secrets/proton.conf`       | atlas   | `modules/services/vpn.nix`        | VPN namespace fails to come up       |
-| `/etc/nix/github-token.conf`           | all     | `modules/core/common.nix`         | Tolerated — see below                |
-| `/var/lib/vaultwarden/vaultwarden.env` | webster | `hosts/webster/configuration.nix` | `vaultwarden.service` fails to start |
+Two secrets can't work this way and stay hand-placed (see the end of this doc):
 
-## ProtonVPN config (atlas)
+| Secret                           | Hosts | Consumed by                | Why not sops                                           |
+| -------------------------------- | ----- | -------------------------- | ------------------------------------------------------ |
+| `/etc/nix/github-token.conf`     | all   | `modules/core/common.nix`  | `nix` needs it to fetch flake inputs, before sops runs |
+| `/etc/nixos/secrets/proton.conf` | atlas | `modules/services/vpn.nix` | not migrated yet — see below                           |
 
-Used by `vpnNamespaces.wg` to confine sabnzbd.
+## What's in sops
 
-1. Download a WireGuard config from the ProtonVPN dashboard.
-2. Place it at `/etc/nixos/secrets/proton.conf` on atlas.
-3. `chmod 600 /etc/nixos/secrets/proton.conf`
+| File                   | Decryptable by  | Contents                                   |
+| ---------------------- | --------------- | ------------------------------------------ |
+| `secrets/webster.yaml` | armaan, webster | `microbin_admin_password`, `groupme_token` |
 
-Note that `wireguardConfigFile` is a **quoted string**, not a path literal. This
-is deliberate: as a string the value is interpolated into a shell script and read
-at runtime, so the secret never enters `/nix/store`. Rewriting it as a bare path
-does not leak it — it fails evaluation outright on every host with `access to
-absolute path ... is forbidden in pure evaluation mode`.
+Each value is wired to a service in its module via `sops.secrets` +
+`sops.templates` (grep the module for `sops.`). The decrypted result lands under
+`/run/secrets/` (tmpfs, root-only) and never touches the Nix store or disk.
 
-## GitHub token (all hosts)
+Vaultwarden needs no secret: it runs from the upstream container with
+`SIGNUPS_ALLOWED=true` and no `ADMIN_TOKEN`.
 
-Raises the GitHub API rate limit for flake fetches. `modules/core/common.nix` pulls it
-in with:
+## How it works
+
+- **`.sops.yaml`** (repo root) maps secret files to the age keys allowed to
+  decrypt them. Host keys are `ssh <host> 'cat /etc/ssh/ssh_host_ed25519_key.pub' | ssh-to-age`.
+  `armaan` is the personal key at `~/.config/sops/age/keys.txt` on the
+  workstation — required to edit any secret.
+- **`modules/core/sops.nix`** (imported by `common.nix`, so every host has it)
+  points sops-nix at `/etc/ssh/ssh_host_ed25519_key` as the decryption key.
+- Secrets are declared in the module that uses them, each naming its own
+  `sopsFile`. There is no `defaultSopsFile` — hosts without a secrets file must
+  not reference one or eval breaks.
+
+## Editing or adding a secret
+
+Get the tools once: `nix shell nixpkgs#sops nixpkgs#age nixpkgs#ssh-to-age`.
+
+```
+cd ~/dotfiles/.config/nixos
+
+# edit an existing file (opens $EDITOR with values decrypted, re-encrypts on save)
+sops secrets/webster.yaml
+
+# view without editing
+sops -d secrets/webster.yaml
+
+# create a new file — the name must match a creation_rule in .sops.yaml
+sops secrets/atlas.yaml
+```
+
+Then in the consuming module:
+
+```nix
+sops.secrets.my_secret.sopsFile = ../../secrets/webster.yaml;
+
+# for a plain single-value file, config.sops.secrets.my_secret.path is it.
+# for an EnvironmentFile / multi-value file, render one:
+sops.templates."foo.env".content = ''
+  TOKEN=${config.sops.placeholder.my_secret}
+'';
+# serviceConfig.EnvironmentFile = config.sops.templates."foo.env".path;
+```
+
+Commit the encrypted file and the module change together. Push before relying on
+a host rebuild (same as the rest of the repo — see README "Deploy model").
+
+## Adding a host to sops
+
+1. `ssh <host> 'cat /etc/ssh/ssh_host_ed25519_key.pub' | ssh-to-age`
+2. Add the `age1…` to `.sops.yaml` under `keys:` and to whichever
+   `creation_rules` it should be able to decrypt.
+3. `sops updatekeys secrets/<file>` for every file whose recipients changed.
+4. Commit.
+
+New VM clones share the template's SSH host key — regenerate before using them
+for secrets: `sudo rm /etc/ssh/ssh_host_* && sudo ssh-keygen -A && sudo systemctl restart sshd`,
+then fix `~/.ssh/known_hosts` on the workstation.
+
+## Recovering
+
+The personal key `~/.config/sops/age/keys.txt` is the escape hatch — keep a copy
+in a password manager. If it's lost but any host key still works, decrypt on that
+host (or via its `/etc/ssh/ssh_host_ed25519_key`) and re-key with `sops
+updatekeys` once a new personal key is in `.sops.yaml`.
+
+---
+
+## GitHub token (all hosts) — hand-placed
+
+Two jobs: raises the GitHub API rate limit for flake fetches, **and** (with
+`repo` scope) lets hosts pull the private `site-seth` / `site-trumpet-snipes`
+flake inputs. `modules/core/common.nix` pulls it in with:
 
 ```
 nix.extraOptions = "!include /etc/nix/github-token.conf";
 ```
 
-The `!include` (rather than `include`) is deliberate — per `nix.conf(5)` a
-missing file is only an error for `include`. A host without the token still
-evaluates and rebuilds; it just fetches from GitHub unauthenticated and may hit
-rate limits during `nix flake update`.
+This can't be a sops secret: `nix` reads it while fetching flake inputs, which
+happens before NixOS activation — so before sops-nix has decrypted anything.
 
-Format:
+`!include` (not `include`) means a missing file is tolerated — but a host whose
+evaluation touches a private input (currently only webster) then fails to fetch
+it. Format, `chmod 600`, owned by root:
 
 ```
 access-tokens = github.com=ghp_...
 ```
 
-`chmod 600`, owned by root.
+Also add it as a GitHub Actions repository secret so CI can evaluate webster.
 
-## Vaultwarden admin token (webster)
+## ProtonVPN config (atlas) — hand-placed, migrate later
 
-Vaultwarden runs with `SIGNUPS_ALLOWED = false`, so the admin panel is the only
-way to create the first account. Without this file the unit does not start at
-all — systemd treats a missing `EnvironmentFile` as fatal.
+Used by `vpnNamespaces.wg` to confine sabnzbd.
 
-1. Generate an Argon2id PHC string (needs a TTY; it will not accept piped input):
+1. Download a WireGuard config from the ProtonVPN dashboard.
+2. Place it at `/etc/nixos/secrets/proton.conf` on atlas, `chmod 600`.
 
-   ```
-   nix run nixpkgs#vaultwarden -- hash
-   ```
+`wireguardConfigFile` is a **quoted string**, not a path literal — deliberately,
+so the value is read at runtime and never enters `/nix/store`. A bare path fails
+evaluation outright (`access to absolute path … is forbidden in pure evaluation
+mode`).
 
-2. Write it on webster, single-quoted so the `$` in the PHC string survives the
-   shell. The login shell here is fish, which has no heredoc — pipe instead:
-
-   ```
-   sudo install -d -m 0700 /var/lib/vaultwarden
-   echo 'ADMIN_TOKEN=$argon2id$v=19$m=65540,t=3,p=4$...' \
-     | sudo tee /var/lib/vaultwarden/vaultwarden.env >/dev/null
-   sudo chmod 600 /var/lib/vaultwarden/vaultwarden.env
-   ```
-
-   The value needs no quotes inside the file itself; systemd strips surrounding
-   quotes when it parses `EnvironmentFile=`, and does no `$` expansion.
-
-3. `sudo systemctl reset-failed vaultwarden && sudo systemctl start vaultwarden`.
-   The `reset-failed` matters: a unit that already hit the start-limit stays
-   refused (`Start request repeated too quickly`) even once the file exists.
-
-4. Log in at `https://vault.armaanlala.tech/admin` with the **plaintext** token
-   and invite your own account. Keep the plaintext in a password manager — it
-   cannot be recovered from the hash.
-
-## On secrets management
-
-Deliberately not using sops-nix or agenix for now — three files placed by hand is
-manageable, and this document is the register. Revisit if the count grows or if a
-host rebuild ever comes up degraded because one of them was forgotten.
-
-If it does get revisited: `sops-nix` with host age keys derived from the existing
-SSH host keys would let all three live encrypted **in this repo**, which fits
-here specifically because `system.autoUpgrade` already fetches from GitHub — the
-flake source is the delivery mechanism for everything else.
+To move it into sops: store the file body as `secrets/atlas.yaml` →
+`proton_wg_config` (or as a `format = "binary"` sops file), point
+`sops.secrets.proton_wg_config` at it, and set `wireguardConfigFile` to
+`config.sops.secrets.proton_wg_config.path`.

@@ -1,8 +1,15 @@
-/secrets/
 result
 CLAUDE.md
 temp
 .claude
+
+# secrets/ IS tracked now -- everything in it is sops-encrypted (see .sops.yaml
+# and docs/secrets.md). The one exception: a hand-placed plaintext
+# secrets/proton.conf may sit on atlas until that secret is moved into sops.
+/secrets/proton.conf
+
+# Scratch: old docker-compose stacks + service data being migrated onto NixOS.
+/old-compose/
 
 # Static site content is served from /var/www on webster, not the repo.
 # Published via the deploy.sh in ~/pptnight and ~/givememoney.

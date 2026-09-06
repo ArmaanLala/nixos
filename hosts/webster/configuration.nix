@@ -1,5 +1,5 @@
 # Webster - misc web services VM
-{ ... }:
+{ inputs, ... }:
 
 {
   imports = [
@@ -7,11 +7,13 @@
     ../../modules/hardware/nfs.nix
     ../../modules/hardware/vm-guest.nix
     ../../modules/hardware/vm-disks.nix
+    ../../modules/services/microbin.nix
     ../../modules/services/nextcloud.nix
     ../../modules/services/open-webui.nix
     ../../modules/services/podman.nix
     ../../modules/services/static-sites.nix
     ../../modules/services/suwayomi.nix
+    ../../modules/services/trumpet-snipes.nix
   ];
 
   nfs.shares = {
@@ -26,6 +28,12 @@
   staticSites = {
     alpd.port = 8417;
     givememoney.port = 8418;
+    # trumpet-snipes is declared in its own module (it has a JSON updater).
+    seth = {
+      port = 8101;
+      source = inputs.site-seth;
+      subdir = "website";
+    };
   };
 
   services.vikunja = {
@@ -39,24 +47,21 @@
     openFirewall = true;
   };
 
-  # TLS terminates at Cloudflare and the tunnel runs on another VM, so this
-  # binds the LAN, not loopback.
-  services.vaultwarden = {
-    enable = true;
-    # WebAuthn origin — must match the Cloudflare hostname exactly.
-    domain = "vault.armaanlala.tech";
-    backupDir = "/var/local/vaultwarden/backup";
-    # ADMIN_TOKEN etc., created by hand on the host — see docs/secrets.md.
-    environmentFile = "/var/lib/vaultwarden/vaultwarden.env";
-    config = {
-      SIGNUPS_ALLOWED = false;
-      ROCKET_ADDRESS = "0.0.0.0";
-      ROCKET_PORT = 8222;
-      ROCKET_LOG = "critical";
+  # Vaultwarden does not work as the native NixOS service here, so it runs from
+  # the upstream image (podman, via oci-containers). Straight translation of the
+  # old iris.yaml compose. TLS terminates at Cloudflare; the tunnel runs on
+  # another VM and reaches this over the LAN on 11001.
+  virtualisation.oci-containers.containers.vaultwarden = {
+    image = "vaultwarden/server:latest";
+    environment = {
+      DOMAIN = "https://vault.armaanlala.tech";
+      SIGNUPS_ALLOWED = "true";
     };
+    volumes = [ "/var/lib/vaultwarden:/data" ];
+    ports = [ "11001:80" ];
   };
 
-  networking.firewall.allowedTCPPorts = [ 8222 ];
+  networking.firewall.allowedTCPPorts = [ 11001 ];
 
   system.stateVersion = "25.05";
 }
