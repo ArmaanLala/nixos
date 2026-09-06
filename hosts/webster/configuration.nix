@@ -31,8 +31,7 @@
     # trumpet-snipes is declared in its own module (it has a JSON updater).
     seth = {
       port = 8101;
-      source = inputs.site-seth;
-      subdir = "website";
+      source = inputs.site-seth + "/website";
     };
   };
 

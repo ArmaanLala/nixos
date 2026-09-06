@@ -1,15 +1,14 @@
 # trumpet-snipes -- a static site plus a small Java job that rebuilds its
 # leaderboard JSON from the GroupMe API.
 #
-# The site itself is served straight from the flake input (read-only Nix store).
-# The generated JSON can't live there, so nginx serves /json/ from a mutable
-# directory that a systemd timer writes into.
+# The site itself is served from the Nix store (via staticSites). The generated
+# JSON can't live there, so this module adds a /json/ location pointing at a
+# writable dir that a systemd timer fills.
 #
 # Secret: the GroupMe token comes from sops (secrets/webster.yaml ->
 # groupme_token), rendered into an EnvironmentFile via sops.templates.
 {
   config,
-  lib,
   pkgs,
   inputs,
   ...
@@ -24,7 +23,7 @@ let
   groupId = "61897280";
 
   # com.jmschonfeld.SnipeLeaderboard, compiled from the fork's groupme-java/.
-  groupme = pkgs.runCommand "trumpet-snipes-groupme" { nativeBuildInputs = [ pkgs.jdk ]; } ''
+  groupme = pkgs.runCommand "trumpet-snipes-groupme" { nativeBuildInputs = [ pkgs.jdk_headless ]; } ''
     mkdir -p $out/share/classes
     cp -r ${src}/groupme-java/lib $out/share/lib
     javac -cp $out/share/lib/json-simple-1.1.1.jar -d $out/share/classes \
@@ -39,16 +38,13 @@ in
 
   staticSites.trumpet-snipes = {
     port = 8100;
-    source = src;
-    subdir = "website";
-    # Overrides the committed (stale) website/json/ with the live copy.
-    extraLocations."/json/".alias = "${jsonDir}/";
+    source = src + "/website";
   };
 
-  systemd.tmpfiles.rules = [
-    "d /var/lib/trumpet-snipes 0755 nginx nginx -"
-    "d ${jsonDir} 0755 nginx nginx -"
-  ];
+  # Live leaderboard JSON, overriding the committed (stale) website/json/.
+  services.nginx.virtualHosts."trumpet-snipes".locations."/json/".alias = "${jsonDir}/";
+
+  systemd.tmpfiles.rules = [ "d ${jsonDir} 0755 nginx nginx -" ];
 
   systemd.services.trumpet-snipes-json = {
     description = "Rebuild trumpet-snipes GroupMe snipe leaderboard JSON";
@@ -61,7 +57,7 @@ in
       EnvironmentFile = config.sops.templates."groupme.env".path;
       ExecStart = pkgs.writeShellScript "trumpet-snipes-json" ''
         set -euo pipefail
-        ${pkgs.jre}/bin/java \
+        ${pkgs.jdk_headless}/bin/java \
           -cp ${groupme}/share/lib/json-simple-1.1.1.jar:${groupme}/share/classes \
           com.jmschonfeld.SnipeLeaderboard json \
           groupid=${groupId} date=${leaderboardStart} token="$GROUPME_TOKEN" \
