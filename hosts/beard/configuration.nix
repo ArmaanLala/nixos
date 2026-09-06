@@ -1,11 +1,6 @@
-# FROZEN SNAPSHOT -- kept as a reference copy of the pre-2026-09-05 machine.
-# The live host is hosts/beard/, which this was copied from. Nothing applies this
-# config any more: the disk it describes now belongs to beard, so a
-# `nixos-rebuild --flake .#drapion` here would fight beard for the same NVMe.
-# Delete this directory (and its flake.nix + check.yml entries) once beard has
-# been running long enough to trust.
-#
-# Drapion - workstation: Ryzen 7800X3D, RX 7900 XTX, 1.8TB NVMe (btrfs)
+# Beard - workstation: Ryzen 7800X3D, RX 7900 XTX, 1.8TB NVMe (btrfs).
+# Rebuilt from scratch on 2026-09-05; was 'drapion' before that, and
+# hosts/beard/ is the frozen pre-rebuild copy.
 { pkgs, lib, ... }:
 
 {
@@ -32,12 +27,12 @@
     nightbeef = "nightbeef";
   };
 
-  networking.hostName = "drapion";
+  networking.hostName = "beard";
   services.udisks2.enable = true;
 
   # Was `configurationLimit = 3` while the ESP was 127M and shared with Windows
   # -- that is what filled /boot on 2026-09-05 and broke the bootloader install
-  # mid-copy. hosts/drapion/disko.nix now declares a 1G ESP, so the override is
+  # mid-copy. hosts/beard/disko.nix now declares a 4G ESP, so the override is
   # gone and common.nix's default of 5 applies again.
   #
   # Kept as a note because the failure was non-obvious: the unit of cost is a

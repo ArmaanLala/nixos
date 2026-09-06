@@ -21,6 +21,7 @@ jobs:
           - lenix
           - webster
           - thinkpad
+          - beard
           - drapion
     steps:
       - uses: actions/checkout@v4

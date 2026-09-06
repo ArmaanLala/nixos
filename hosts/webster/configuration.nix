@@ -21,7 +21,7 @@
   };
 
   networking.hostName = "webster";
-  openWebui.ollamaUrl = "http://drapion:11434";
+  openWebui.ollamaUrl = "http://beard:11434";
 
   staticSites = {
     alpd.port = 8417;

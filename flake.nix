@@ -80,6 +80,18 @@
           ];
         };
 
+        beard = nixpkgs.lib.nixosSystem {
+          inherit system specialArgs;
+          modules = [
+            disko.nixosModules.disko
+            ./hosts/beard/configuration.nix
+          ];
+        };
+
+        # Frozen pre-2026-09-05 copy of the machine that is now `beard`. Kept
+        # only so the old config stays buildable while beard settles in; delete
+        # this and hosts/drapion/ once it is no longer wanted. Never deploy it --
+        # it claims the same physical NVMe as beard.
         drapion = nixpkgs.lib.nixosSystem {
           inherit system specialArgs;
           modules = [
