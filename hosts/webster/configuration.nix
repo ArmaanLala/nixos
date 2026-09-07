@@ -23,7 +23,7 @@
   };
 
   networking.hostName = "webster";
-  openWebui.ollamaUrl = "http://beard:11434";
+  openWebui.ollamaUrl = "http://bread:11434";
 
   staticSites = {
     alpd.port = 8417;

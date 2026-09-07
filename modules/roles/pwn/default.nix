@@ -94,6 +94,11 @@ in
     checksec # RELRO / canary / NX / PIE
     rubyPackages.seccomp-tools # dump seccomp filters
 
+    rizin # radare2 successor, faster triage than opening Ghidra
+    binwalk # firmware/blob extraction
+    termshark # TUI wireshark, reads the same captures as tcpdump
+    ffuf # web content/parameter fuzzer
+
     # dev.nix also puts a bare `python3` in this profile and the collision is
     # resolved by merge order; hiPrio makes this one win, so `import pwn` works
     # on the host.

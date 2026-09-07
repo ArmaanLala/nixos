@@ -62,9 +62,9 @@
       pkgs = nixpkgs.legacyPackages.${system};
       treefmtEval = treefmt-nix.lib.evalModule pkgs ./lib/treefmt.nix;
 
-      # Cherry-pick individual packages from unstable on the 25.11 hosts, as
-      # `unstable.foo`. Instantiated once and shared; allowUnfree has to be
-      # repeated here because it is set on the host's own pkgs, not this one.
+      # Cherry-pick individual packages from unstable as `unstable.foo`.
+      # Instantiated once and shared; allowUnfree has to be repeated here
+      # because it is set on the host's own pkgs, not this one.
       unstable = import nixpkgs-unstable {
         inherit system;
         config.allowUnfree = true;
@@ -112,23 +112,11 @@
           ];
         };
 
-        beard = nixpkgs.lib.nixosSystem {
+        bread = nixpkgs.lib.nixosSystem {
           inherit system specialArgs;
           modules = [
             disko.nixosModules.disko
-            ./hosts/beard/configuration.nix
-          ];
-        };
-
-        # Frozen pre-2026-09-05 copy of the machine that is now `beard`. Kept
-        # only so the old config stays buildable while beard settles in; delete
-        # this and hosts/drapion/ once it is no longer wanted. Never deploy it --
-        # it claims the same physical NVMe as beard.
-        drapion = nixpkgs.lib.nixosSystem {
-          inherit system specialArgs;
-          modules = [
-            disko.nixosModules.disko
-            ./hosts/drapion/configuration.nix
+            ./hosts/bread/configuration.nix
           ];
         };
       };

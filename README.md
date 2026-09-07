@@ -1,87 +1,61 @@
 # nixos
 
-Flake-based NixOS configuration for six machines. Lives at
+Flake-based NixOS configuration for six machines, all on `nixos-26.05`. Lives at
 `~/dotfiles/.config/nixos`, symlinked from `/etc/nixos`.
 
-## Hosts
+| Host       | Role                                                                                                  | Hardware                           |
+| ---------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `atlas`    | \*arr stack, VPN-confined sabnzbd                                                                     | generic VM (label disks)           |
+| `proton`   | Jellyfin                                                                                              | VM, own hardware config            |
+| `lenix`    | Jellyfin, Immich, Paperless                                                                           | bare metal, GRUB/BIOS              |
+| `webster`  | microbin, nextcloud, open-webui, suwayomi, trumpet-snipes, vikunja, actual, vaultwarden, static sites | generic VM                         |
+| `thinkpad` | laptop desktop                                                                                        | ThinkPad X1 Yoga 7th gen           |
+| `bread`    | workstation: desktop, Ollama/ROCm, libvirt, pwn, STM32                                                | Ryzen 7800X3D + RX 7900 XTX, btrfs |
 
-| Host       | Channel  | Role                                                                                              | Hardware                       |
-| ---------- | -------- | ------------------------------------------------------------------------------------------------- | ------------------------------ |
-| `atlas`    | 25.11    | \*arr stack, VPN-confined sabnzbd                                                                 | generic VM (label disks)       |
-| `proton`   | 25.11    | Jellyfin                                                                                          | VM, own hardware config        |
-| `lenix`    | 25.11    | Jellyfin + Immich                                                                                 | bare metal, GRUB/BIOS          |
-| `webster`  | 25.11    | vikunja, actual, open-webui, suwayomi, vaultwarden (container), microbin, nextcloud, static sites | generic VM                     |
-| `thinkpad` | 25.11    | laptop desktop                                                                                    | ThinkPad X1 Yoga 7th gen       |
-| `beard`    | unstable | workstation, Ollama/ROCm, libvirt                                                                 | Ryzen 7800X3D + AMD GPU, btrfs |
+`system.stateVersion` differs per host (25.05 vs 25.11) — it records when each
+host was installed and must never be "fixed" to match.
 
-`beard` (formerly `drapion`) deliberately tracks `nixos-unstable`; everything else tracks the 25.11
-release. `system.stateVersion` differs per host (25.05 vs 25.11) — that records
-when each host was installed and must never be "fixed" to match.
+## Deploy
 
-## Deploy model
+Hosts do **not** deploy from a local checkout. `system.autoUpgrade`
+(`modules/core/common.nix`) fetches `github:ArmaanLala/nixos#<hostname>` daily at
+03:00 (+45 min jitter), rebuilds, no reboot. So **uncommitted local edits are
+invisible to the fleet and get reverted on the next run** — push first.
 
-Hosts do **not** deploy from a local checkout. Each one fetches this repo
-straight from GitHub and rebuilds itself:
-
-```nix
-system.autoUpgrade = {
-  flake = "github:ArmaanLala/nixos#${config.networking.hostName}";
-  dates = "*-*-* 03:00:00";   # daily, +45min jitter
-  allowReboot = false;
-};
+```bash
+sudo nixos-rebuild switch --flake /etc/nixos#<host>   # or: nh os switch
 ```
 
-The practical consequence: **uncommitted local edits are invisible to the fleet,
-and get reverted on the next daily run.** Push before relying on a local
-rebuild.
-
-Manual rebuild:
-
-```
-sudo nixos-rebuild switch --flake /etc/nixos#<hostname>
-```
-
-Or trigger the upgrade unit immediately (same flake ref + `--refresh` as the
-timer): `scripts/nixup` — restarts `nixos-upgrade.service` and tails its log.
+`../../scripts/nixup [host...]` restarts the upgrade unit now on the always-on
+servers (one tmux pane each, reboots on success).
 
 ## Layout
 
 ```
-flake.nix              inputs + one nixosSystem block per host
-lib/treefmt.nix        formatter config behind `nix fmt`
-modules/               shared modules, imported by relative path from hosts/
+flake.nix              inputs + one nixosSystem per host
+lib/treefmt.nix        formatter behind `nix fmt`
+modules/core/          common.nix (every host), sops.nix
+modules/hardware/      nfs, vm-guest, vm-disks
+modules/roles/         desktop, dev, gaming, media-server, stm, pwn/
+modules/services/      one file per service, import-to-enable
 hosts/<name>/          per-host config + hardware-configuration.nix
-docs/secrets.md        the three hand-provisioned secrets
+docs/secrets.md        sops-nix setup + the one hand-placed secret
 ```
 
-`modules/common.nix` is what every machine gets: users, SSH keys, shell, the
-`networking.hosts` table, nix settings, and autoUpgrade. Modules are
-import-to-enable — importing `modules/jellyfin.nix` turns Jellyfin on. Where a
-module needs _parameters_ it defines real options instead (`nfsMounts`,
-`openWebui.ollamaUrl`).
+Modules are import-to-enable. Where a module needs parameters it defines real
+options instead (`nfs.shares`, `openWebui.ollamaUrl`, `staticSites`).
 
 ## Adding a host
 
-1. `hosts/<name>/configuration.nix` importing at minimum `../../modules/common.nix`,
+1. `hosts/<name>/configuration.nix` importing `../../modules/core/common.nix`,
    plus `networking.hostName` and `system.stateVersion`.
-2. Its `hardware-configuration.nix` (or `../../modules/vm.nix` for a generic VM).
-3. A `nixosSystem` block in `flake.nix`.
-4. An entry in the `networking.hosts` table in `modules/common.nix`.
-5. Add it to the CI matrix in `.github/workflows/check.yml`.
-6. Provision any secrets it needs — see `docs/secrets.md`.
-
-Renaming a host has a catch: autoUpgrade resolves `#${config.networking.hostName}`,
-so once main carries only the new name, the still-old-named machine's timer fails
-on a missing flake attribute until you rebuild it manually once.
+2. Its `hardware-configuration.nix` (or `modules/hardware/vm-*.nix` for a VM).
+3. A `nixosSystem` block in `flake.nix` and a matrix entry in
+   `.github/workflows/check.yml`.
+4. An entry in the `networking.hosts` table in `modules/core/common.nix`.
+5. Provision secrets — see `docs/secrets.md`.
 
 ## Checks
 
-```
-nix fmt                      # format (treefmt)
-nix flake check              # formatting check
-nix eval .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath
-```
-
-CI runs the per-host evaluation plus the formatting check on every push to main.
-Evaluation catches the realistic breakage — options renamed by a flake update,
-typo'd attributes, missing imports — without needing build capacity.
+`nix fmt` formats; `nix flake check` enforces it. CI evaluates every host on each
+push to `main` — a `main` that doesn't evaluate breaks the whole fleet at once.

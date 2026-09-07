@@ -16,7 +16,6 @@
     # Serial console for printf-style debugging over the USB-UART bridge
     tio # `tio /dev/ttyUSB0`, reconnects on its own when the board resets
 
-    usbutils # lsusb, to confirm the probe enumerated
     bear # compile_commands.json out of a CubeMX Makefile, so clangd finds the HAL
   ];
 

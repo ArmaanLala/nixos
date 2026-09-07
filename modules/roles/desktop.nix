@@ -15,11 +15,6 @@ let
   sessions = config.services.displayManager.sessionData.desktops;
 in
 {
-  # Scratch module -- see test.nix.
-  imports = [
-    ./test.nix
-  ];
-
   # Idle handling *at the greeter*. hypridle only exists inside a logged-in
   # compositor; tuigreet is a TUI on tty1, so the blank timer comes from the
   # kernel instead. The kernel default is 0 (never blank). Only keyboard input
@@ -115,17 +110,39 @@ in
     nerd-fonts.ubuntu
   ];
 
+  # Module, not package: programs.hyprlock.enable also registers
+  # security.pam.services.hyprlock (without which it cannot authenticate) and
+  # pulls in services.hypridle + its systemd user unit. Bound to SUPER SHIFT L.
+  programs.hyprlock.enable = true;
+
+  # No NixOS module for swayosd, so wire it by hand. The backend is a Type=dbus
+  # unit owning org.erikreider.swayosd on the SYSTEM bus, hence:
+  #   services.dbus.packages     -- bus policy; without it the unit dies with
+  #                                 "Request to own name refused by policy"
+  #   environment.systemPackages -- polkit reads the system profile only, never
+  #                                 per-user ones (also puts swayosd-client on
+  #                                 PATH for the media keys)
+  # graphical.target, not multi-user.target: the unit is PartOf graphical.target,
+  # which is itself After multi-user.target -- that transaction is cyclic.
+  systemd.packages = [ pkgs.swayosd ];
+  services.dbus.packages = [ pkgs.swayosd ];
+  systemd.services.swayosd-libinput-backend.wantedBy = [ "graphical.target" ];
+
   # System-level desktop integration components
   environment.systemPackages = with pkgs; [
     polkit_gnome
     xdg-desktop-portal-hyprland
     xdg-desktop-portal-gtk
     xwayland-satellite
-
-    # no hypridle: services.hypridle (pulled in by programs.hyprlock.enable in
-    # test.nix) already installs the package and its systemd user unit.
+    swayosd
     # bottles # temporarily disabled - patool tests failing on python 3.14
     opencode
+
+    # claude-code from the flake's own output, not nixpkgs and not its overlay:
+    # the overlay is `final.callPackage`, which rebuilds against our nixpkgs and
+    # misses the Cachix cache the no-`follows` input exists for. Matches the
+    # pwndbg pattern in dev.nix. System-wide so root gets it too.
+    claude-code.packages.x86_64-linux.default
   ];
 
   users.users.armaan.packages = with pkgs; [
@@ -147,12 +164,6 @@ in
     vulkan-tools
 
     # Desktop applications
-    # The flake's own output, not its overlay: the overlay is
-    # `final.callPackage`, which rebuilds against our nixpkgs and misses the
-    # Cachix cache the no-`follows` input exists for. Matches the pwndbg
-    # pattern in dev.nix.
-    claude-code.packages.x86_64-linux.default
-
     obs-studio
     kicad
     # freecad # temporarily disabled - rebuilds vtk/pdal/gdal from source, slow
@@ -178,6 +189,28 @@ in
     wl-clipboard
     udiskie
     pavucontrol
+
+    # Screenshot / capture, bound in hyprland.conf
+    slurp # grimblast bundles its own; wl-screenrec needs it on PATH
+    satty # fed from grimblast (SUPER SHIFT S)
+    wl-screenrec # VAAPI-accelerated capture (SUPER SHIFT R)
+    hyprpicker # SUPER P
+
+    # File managers
+    yazi # TUI, async, image previews in ghostty via kitty graphics
+    lf # TUI, more minimal than yazi
+    kdePackages.dolphin # GUI, split panes + embedded terminal
+    poppler-utils # yazi preview backend -- PDFs
+    ffmpegthumbnailer # yazi preview backend -- video
+
+    # PDF viewers
+    zathura # vim keys, minimal; bundles the mupdf/ps/djvu plugins
+    sioyek # built for papers: reference jumps, portals
+    papers # GNOME/GTK4, good annotations
+
+    # Hardware UIs (no GUI otherwise for these)
+    bluetuith # hardware.bluetooth
+    wiremix # TUI counterpart to pavucontrol
   ];
 
   # Writes /etc/xdg/mimeapps.list. Without an entry, xdg-open picks whichever
@@ -191,8 +224,8 @@ in
     "image/tiff" = "org.gnome.Loupe.desktop";
     "image/avif" = "org.gnome.Loupe.desktop";
     "image/svg+xml" = "org.gnome.Loupe.desktop";
-    "application/pdf" = "firefox.desktop";
-    "inode/directory" = "org.gnome.Nautilus.desktop";
+    "application/pdf" = "org.pwmt.zathura.desktop";
+    "inode/directory" = "org.kde.dolphin.desktop";
   };
 
   # openFirewall (port 53317, TCP+UDP) only takes effect when the module itself

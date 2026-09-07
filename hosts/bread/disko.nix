@@ -1,11 +1,11 @@
-# Declarative disk layout for beard's Samsung 980 PRO.
+# Declarative disk layout for bread's Samsung 980 PRO.
 #
 # SCOPE: this file describes /dev/nvme0n1 ONLY. The second NVMe (nvme1n1, a
 # Crucial P3 holding a Windows install + its recovery partition) is deliberately
 # absent, so `disko --mode destroy` cannot reach it. Windows' bootloader does
 # NOT live there though -- it is /EFI/Microsoft on the ESP below, which a
 # reformat destroys. Back that directory up and restore it afterwards or Windows
-# stops booting; hosts/beard/README-reinstall.md has the procedure.
+# stops booting; hosts/bread/README-reinstall.md has the procedure.
 { ... }:
 let
   # Every mountOptions list must be complete: disko passes it through verbatim
@@ -61,7 +61,7 @@ in
             extraArgs = [
               "-f"
               "-L"
-              "beard"
+              "bread"
             ];
 
             subvolumes = {
@@ -100,7 +100,7 @@ in
   # has no concept of mounting the root of the filesystem itself, which is why
   # this is a plain fileSystems entry and why the -L label above exists.
   fileSystems."/partition-root" = {
-    device = "/dev/disk/by-label/beard";
+    device = "/dev/disk/by-label/bread";
     fsType = "btrfs";
     # nofail because this is a convenience mount, not something boot needs. The
     # label only exists after disko has run, so without it a machine that has

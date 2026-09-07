@@ -1,4 +1,4 @@
-# Ollama with ROCm. Beard-only: the render node ordering below is hardcoded to
+# Ollama with ROCm. bread-only: the render node ordering below is hardcoded to
 # that machine's card — parameterise it if a second GPU host appears.
 { pkgs, lib, ... }:
 

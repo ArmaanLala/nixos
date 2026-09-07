@@ -8,9 +8,6 @@ temp
 # secrets/proton.conf may sit on atlas until that secret is moved into sops.
 /secrets/proton.conf
 
-# Scratch: old docker-compose stacks + service data being migrated onto NixOS.
-/old-compose/
-
 # Static site content is served from /var/www on webster, not the repo.
 # Published via the deploy.sh in ~/pptnight and ~/givememoney.
 /hosts/webster/alpd/

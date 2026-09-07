@@ -11,15 +11,10 @@
   # === Boot & System ===
   boot.loader.systemd-boot.enable = lib.mkDefault true;
 
-  # 2026-09-05: without this, systemd-boot keeps a kernel+initrd pair in the ESP
-  # for every generation and eventually fills it -- on beard (then drapion) that
-  # meant a hard
-  # `No space left on device` mid-bootloader-install, which aborts the switch and
-  # leaves a half-copied .tmp behind. Note the installer writes entries for EVERY
-  # generation in the system profile, so a too-full ESP keeps failing until old
-  # generations are actually deleted, not just skipped.
-  # beard's ESP was only 127M and a single 6.18.49 kernel+initrd is ~41M, so it
-  # fits about three distinct kernel builds. The real fix is a bigger ESP.
+  # Cap ESP usage: systemd-boot keeps a kernel+initrd pair per generation and a
+  # small ESP fills up mid-bootloader-install (`No space left on device`, aborts
+  # the switch). The cost unit is a distinct (kernel, initrd) pair, not a
+  # distinct kernel version.
   boot.loader.systemd-boot.configurationLimit = lib.mkDefault 5;
   boot.loader.efi.canTouchEfiVariables = lib.mkDefault true;
   boot.kernelPackages = lib.mkDefault pkgs.linuxPackages;
@@ -89,12 +84,7 @@
     "10.0.0.174" = [ "atlas" ];
 
     "10.0.0.18" = [ "kvm" ];
-    # Same box: renamed drapion -> beard on 2026-09-05. Both names kept
-    # pointing here so anything still saying "drapion" resolves.
-    "10.0.0.183" = [
-      "beard"
-      "drapion"
-    ];
+    "10.0.0.183" = [ "bread" ];
     "10.0.0.186" = [ "lenix" ];
     "10.0.0.200" = [ "hydra" ];
     "10.0.0.201" = [ "loki" ];
@@ -107,11 +97,8 @@
     "100.76.77.32" = [ "macbook" ];
     "100.90.169.115" = [ "ts-atlas" ];
 
-    # Stale until beard rejoins the tailnet -- update the IP after `tailscale up`.
-    "100.99.14.97" = [
-      "ts-beard"
-      "ts-drapion"
-    ];
+    # Stale until bread rejoins the tailnet -- update the IP after `tailscale up`.
+    "100.99.14.97" = [ "ts-bread" ];
     "100.111.67.1" = [ "ts-kvm" ];
     "100.106.33.35" = [ "iphone" ];
     "100.106.156.10" = [ "ts-lenix" ];
@@ -201,7 +188,7 @@
     Host kvm ts-kvm
       User root
 
-    Host atlas proton lenix webster thinkpad beard
+    Host atlas proton lenix webster thinkpad bread
       User armaan
 
     # Tailscale twins -- the bare names above are 10.0.0.x and hang off-LAN.
