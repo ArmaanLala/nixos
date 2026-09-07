@@ -77,7 +77,10 @@
 
         proton = nixpkgs.lib.nixosSystem {
           inherit system specialArgs;
-          modules = [ ./hosts/proton/configuration.nix ];
+          modules = [
+            ./hosts/proton/configuration.nix
+            vpn-confinement.nixosModules.default
+          ];
         };
 
         lenix = nixpkgs.lib.nixosSystem {
