@@ -1,4 +1,3 @@
-# Proton - Jellyfin media server
 { ... }:
 
 {

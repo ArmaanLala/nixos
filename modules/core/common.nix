@@ -1,4 +1,3 @@
-# Common configuration shared across all hosts
 {
   config,
   lib,
@@ -8,11 +7,8 @@
 {
   imports = [ ./sops.nix ];
 
-  # === Boot & System ===
   boot.loader.systemd-boot.enable = lib.mkDefault true;
 
-  # Cap ESP usage: systemd-boot keeps a kernel+initrd pair per generation and a
-  # small ESP fills up mid-install (aborts the switch).
   boot.loader.systemd-boot.configurationLimit = lib.mkDefault 5;
   boot.loader.efi.canTouchEfiVariables = lib.mkDefault true;
   boot.kernelPackages = lib.mkDefault pkgs.linuxPackages;
@@ -20,26 +16,17 @@
   time.timeZone = lib.mkDefault "America/Los_Angeles";
   i18n.defaultLocale = "en_US.UTF-8";
 
-  # === Networking ===
   services.tailscale = {
     enable = true;
-    # Else tailscaled outranks NetworkManager's resolver and pihole never wins.
-    # Tailnet IPs are pinned in `networking.hosts`, so MagicDNS isn't needed.
     extraSetFlags = [ "--accept-dns=false" ];
   };
   networking.networkmanager.enable = true;
   networking.firewall.enable = lib.mkDefault true;
 
-  # Pin pihole ahead of DHCP's resolvers (openresolv prepends; DHCP still
-  # follows as fallback). No public resolver on purpose -- DNS should fail loud
-  # if pihole is down rather than route around the ad-blocking.
-  # `networking.nameservers` does nothing under NetworkManager + resolvconf.
-  # mkDefault so roaming hosts can drop the pin (unreachable off-LAN).
   networking.resolvconf.extraConfig = lib.mkDefault ''
     name_servers='10.0.0.222'
   '';
 
-  # iperf3: 5201 is control (TCP) and data, so UDP tests (-u) need UDP open too.
   networking.firewall.allowedTCPPorts = [ 5201 ];
   networking.firewall.allowedUDPPorts = [ 5201 ];
 
@@ -53,7 +40,6 @@
   };
 
   networking.hosts = {
-    # Local network
     "10.0.0.30" = [ "prometheus" ];
     "10.0.0.31" = [ "clio" ];
     "10.0.0.32" = [ "orpheus" ];
@@ -81,11 +67,9 @@
     "10.0.0.222" = [ "pihole" ];
     "10.0.0.250" = [ "alpine" ];
 
-    # Tailscale IPs
     "100.76.77.32" = [ "macbook" ];
     "100.90.169.115" = [ "ts-atlas" ];
 
-    # Stale until bread rejoins the tailnet -- update the IP after `tailscale up`.
     "100.99.14.97" = [ "ts-bread" ];
     "100.111.67.1" = [ "ts-kvm" ];
     "100.106.33.35" = [ "iphone" ];
@@ -101,7 +85,6 @@
     "100.91.201.78" = [ "ts-truenas" ];
   };
 
-  # === Users ===
   users.groups.armaan = {
     gid = 1000;
   };
@@ -109,8 +92,6 @@
   users.users.armaan = {
     isNormalUser = true;
     description = "Armaan Lala";
-    # Pinned (not from stateful /var/lib/nixos/uid-map) so a reinstall keeps the
-    # same uid and --numeric-owner backup restores line up. gid pinned likewise.
     uid = 1000;
     extraGroups = [
       "networkmanager"
@@ -124,13 +105,12 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG3BghIktdP46BOXdHpS2JgtytHs0SFIjv+58EP/Pniw armaan@beard 04-03-2026"
     ];
     packages = with pkgs; [
-      # CLI tools
       ripgrep
       fd
       lazygit
-      delta # configured in programs.git below
+      delta
       neovim
-      tree-sitter # nvim-treesitter (main branch) shells out to it to build parsers
+      tree-sitter
       tealdeer
       duf
       gdu
@@ -145,8 +125,6 @@
       tokei
       gh
 
-      # Shell and terminal
-      # fish itself comes from programs.fish.enable
       tmux
       fastfetch
       starship
@@ -164,20 +142,13 @@
     };
   };
 
-  # Spliced into /etc/ssh/ssh_config ahead of the module's own `Host *` block,
-  # so anything here wins. First match per keyword wins, hence `Host *` last;
-  # short names resolve through `networking.hosts` above, not HostName lines.
-  # Non-NixOS clients (macbook) never get this -- copy to ~/.ssh/config there.
   programs.ssh.extraConfig = ''
-    # The NanoKVM. Its web UI has its own separate account -- these are the
-    # system credentials, and root is the only user on the device.
     Host kvm ts-kvm
       User root
 
     Host atlas proton lenix webster thinkpad bread
       User armaan
 
-    # Tailscale twins -- the bare names above are 10.0.0.x and hang off-LAN.
     Host ts-* jumpbox
       User armaan
 
@@ -192,22 +163,17 @@
 
     Host github.com
       User git
-      # github disconnects after too many wrong key offers from the agent.
       IdentitiesOnly yes
 
     Host *
       IdentityFile ~/.ssh/id_ed25519
-      # Reuse one connection per host. %C hashes the destination to keep the
-      # socket path under the ~104 char unix socket limit.
       ControlMaster auto
       ControlPath ~/.ssh/control-%C
       ControlPersist 5m
-      # Ride out brief wifi drops and suspends instead of dropping the shell.
       ServerAliveInterval 60
       ServerAliveCountMax 3
   '';
 
-  # === Shell ===
   programs.bash.interactiveShellInit = ''
     if [[ $EUID -ne 0 && $(${pkgs.procps}/bin/ps --no-header --pid=$PPID --format=comm) != "fish" && -z ''${BASH_EXECUTION_STRING} ]]
     then
@@ -234,7 +200,6 @@
     };
   };
 
-  # === Packages ===
   environment.systemPackages = with pkgs; [
     vim
     git
@@ -255,9 +220,6 @@
     iperf3
   ];
 
-  # === Nix Settings ===
-  # `!include` (not `include`) tolerates the file being absent, so unprovisioned
-  # hosts still evaluate. See docs/secrets.md.
   nix.extraOptions = ''
     !include /etc/nix/github-token.conf
   '';
@@ -284,8 +246,6 @@
     ];
   };
 
-  # Make ad-hoc `nix shell nixpkgs#foo` / `nix-shell -p` use this host's own
-  # nixpkgs instead of fetching a channel. pkgs.path is per-host correct.
   nix.registry.nixpkgs.to = {
     type = "path";
     path = pkgs.path;
@@ -302,21 +262,17 @@
       user.name = "Armaan Lala";
       user.email = "armaanlala@gmail.com";
 
-      # delta highlights changed words within a line by default.
       core.pager = "delta";
       interactive.diffFilter = "delta --color-only";
       delta = {
-        navigate = true; # n / N jump between files in the diff
+        navigate = true;
         line-numbers = true;
-        hyperlinks = true; # ghostty turns file:line into clickable links
+        hyperlinks = true;
       };
 
-      # delta reads these to render moved blocks and conflicts properly.
       diff.colorMoved = "default";
       merge.conflictstyle = "zdiff3";
 
-      # Word/char granularity on demand, where delta's intra-line highlight
-      # isn't enough.
       alias = {
         wdiff = "diff --word-diff=color";
         cdiff = "diff --color-words=.";
@@ -331,10 +287,6 @@
     flake = "/etc/nixos";
   };
 
-  # === Auto Upgrade ===
-  # Runs as root via nix with no local checkout, so no file-ownership /
-  # "git pull needs root" problems. The module adds --refresh automatically, so
-  # every run sees the latest commit. See README "Deploy model".
   system.autoUpgrade = {
     enable = true;
     flake = "github:ArmaanLala/nixos#${config.networking.hostName}";

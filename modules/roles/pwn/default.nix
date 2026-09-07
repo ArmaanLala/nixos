@@ -1,6 +1,3 @@
-# Binary exploitation - CTF pwn tooling. Two layers: nix-ld + pwninit on the
-# host for quick triage, and `pwnbox` (see ./pwnbox.sh) - a throwaway Ubuntu VM
-# with its own kernel for apt-get, kernel pwn and vsyscall=emulate.
 { pkgs, lib, ... }:
 
 let
@@ -11,9 +8,9 @@ let
       cloud-utils
       qemu-utils
       libvirt
-      virt-manager # virt-install
+      virt-manager
       openssh
-      ncurses # infocmp, for the terminfo sync
+      ncurses
     ];
     text = builtins.replaceStrings [ "@CLOUD_INIT@" ] [ "${./cloud-init.yaml}" ] (
       builtins.readFile ./pwnbox.sh
@@ -22,7 +19,7 @@ let
 in
 {
   imports = [
-    ../../services/libvirt.nix # pwnbox drives qemu:///system
+    ../../services/libvirt.nix
   ];
 
   programs.nix-ld = {
@@ -38,7 +35,6 @@ in
     ];
   };
 
-  # virtiofsd, for the VM's --filesystem share
   virtualisation.libvirtd.qemu.vhostUserPackages = [ pkgs.virtiofsd ];
 
   systemd.tmpfiles.rules = [ "d /home/armaan/pwn 0755 armaan users -" ];
@@ -46,18 +42,17 @@ in
   users.users.armaan.packages = with pkgs; [
     pwnbox
 
-    pwninit # patch a binary onto the provided libc/ld, fetch symbols
-    patchelf # the manual version of the above
-    one_gadget # execve("/bin/sh") one-shot offsets
-    checksec # RELRO / canary / NX / PIE
-    rubyPackages.seccomp-tools # dump seccomp filters
+    pwninit
+    patchelf
+    one_gadget
+    checksec
+    rubyPackages.seccomp-tools
 
-    rizin # radare2 successor, faster triage than opening Ghidra
-    binwalk # firmware/blob extraction
-    termshark # TUI wireshark, reads the same captures as tcpdump
-    ffuf # web content/parameter fuzzer
+    rizin
+    binwalk
+    termshark
+    ffuf
 
-    # hiPrio to win the collision with dev.nix's bare python3, so `import pwn` works.
     (lib.hiPrio (
       python3.withPackages (
         ps: with ps; [
@@ -66,7 +61,6 @@ in
           ropper
           capstone
           unicorn
-          # angr # broken in nixpkgs 26.05 (missing setuptools-rust build dep)
         ]
       )
     ))

@@ -1,4 +1,3 @@
-# Thinkpad - Lenovo ThinkPad X1 Yoga 7th Gen
 { pkgs, ... }:
 
 {
@@ -11,7 +10,6 @@
     ../../modules/hardware/nfs.nix
   ];
 
-  # Roaming laptop — NAS over the tailnet.
   nfs.server = "ts-truenas";
   nfs.shares = {
     media = "arr";
@@ -21,9 +19,6 @@
 
   networking.hostName = "thinkpad";
 
-  # Opt out of common.nix's pinned pihole nameserver. This one roams, and
-  # 10.0.0.222 is unreachable off-LAN -- every fresh lookup would block on it
-  # until timeout before falling through. Plain "" beats the mkDefault there.
   networking.resolvconf.extraConfig = "";
 
   services.fprintd.enable = true;

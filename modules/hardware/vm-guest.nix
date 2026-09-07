@@ -1,4 +1,3 @@
-# QEMU/KVM guest integration — safe on any VM; import on every virtual host.
 { modulesPath, ... }:
 
 {

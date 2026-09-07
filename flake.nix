@@ -6,7 +6,6 @@
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
-    # No `follows`: vpn-confinement declares no inputs, so an override warns every eval.
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
@@ -14,19 +13,11 @@
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
     pwndbg.url = "github:pwndbg/pwndbg";
     pwndbg.inputs.nixpkgs.follows = "nixpkgs";
-    # No `follows`: overriding nixpkgs changes the derivation hash and defeats
-    # the Cachix binary cache that's the whole point of using this flake.
     claude-code.url = "github:sadjow/claude-code-nix";
 
-    # Encrypted secrets committed to this repo; decrypted on each host at
-    # activation with a key derived from its SSH host key. See docs/secrets.md.
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Static-site content, served straight from the store on webster (see
-    # modules/services/static-sites.nix). `flake = false` -- these are plain
-    # source trees, no build. Update a site: push to its repo, then
-    # `nix flake update site-<name>`.
     site-seth = {
       url = "github:ArmaanLala/seth";
       flake = false;
@@ -36,8 +27,6 @@
       flake = false;
     };
 
-    # Armaan's microbin fork (upstream master + a custom colour scheme). Built
-    # from source by modules/services/microbin.nix.
     microbin-src = {
       url = "github:ArmaanLala/microbin";
       flake = false;
@@ -62,9 +51,6 @@
       pkgs = nixpkgs.legacyPackages.${system};
       treefmtEval = treefmt-nix.lib.evalModule pkgs ./lib/treefmt.nix;
 
-      # Cherry-pick individual packages from unstable as `unstable.foo`.
-      # Instantiated once and shared; allowUnfree has to be repeated here
-      # because it is set on the host's own pkgs, not this one.
       unstable = import nixpkgs-unstable {
         inherit system;
         config.allowUnfree = true;
@@ -123,7 +109,6 @@
 
       formatter.${system} = treefmtEval.config.build.wrapper;
 
-      # Makes `nix flake check` fail on formatting drift, not just advise via `nix fmt`.
       checks.${system}.formatting = treefmtEval.config.build.check self;
     };
 }

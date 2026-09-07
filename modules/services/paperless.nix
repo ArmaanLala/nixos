@@ -1,6 +1,3 @@
-# The admin password is re-applied on every activation, so changing it in the web
-# UI is undone on the next rebuild — change it here. The upstream module has no
-# openFirewall, hence the explicit port.
 { ... }:
 
 {

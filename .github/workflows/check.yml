@@ -1,7 +1,4 @@
 name: check
-# Every host rebuilds itself from this branch unattended (system.autoUpgrade in
-# modules/core/common.nix). A main that does not evaluate breaks every machine at
-# once, so evaluate each of them on every push.
 on:
   push:
     branches: [main]
@@ -12,7 +9,6 @@ jobs:
     name: eval ${{ matrix.host }}
     runs-on: ubuntu-latest
     strategy:
-      # One broken host should not hide the state of the other five.
       fail-fast: false
       matrix:
         host:
@@ -26,15 +22,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
         with:
-          # webster's eval pulls the private site-seth / site-trumpet-snipes
-          # flake inputs. FLAKE_PRIVATE_TOKEN is a repo secret: a PAT with `repo`
-          # scope. The built-in GITHUB_TOKEN can't read other private repos.
           extra-conf: |
             access-tokens = github.com=${{ secrets.FLAKE_PRIVATE_TOKEN }}
       - name: Evaluate ${{ matrix.host }}
-        # Evaluation alone catches the realistic failures — options renamed by a
-        # flake update, typo'd attributes, missing imports — with no build
-        # capacity. allowUnfree is set inside the config, so no env var.
         run: |
           nix eval --raw \
             .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel.drvPath
@@ -45,7 +35,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
         with:
-          # Needed to lock the private flake inputs before the check builds.
           extra-conf: |
             access-tokens = github.com=${{ secrets.FLAKE_PRIVATE_TOKEN }}
       - name: Check treefmt formatting

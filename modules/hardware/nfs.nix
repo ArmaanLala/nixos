@@ -40,7 +40,6 @@ in
     };
   };
 
-  # Escape hatch for anything that does not live under wdblue.
   options.nfsMounts = lib.mkOption {
     type = lib.types.attrsOf lib.types.str;
     default = { };

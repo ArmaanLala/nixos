@@ -1,4 +1,3 @@
-# Atlas - media server (*arr stack, VPN-confined sabnzbd)
 { ... }:
 
 {

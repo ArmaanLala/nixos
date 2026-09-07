@@ -1,4 +1,3 @@
-# Development environment - Languages, debugging, and tools
 {
   pkgs,
   pwndbg,
@@ -7,11 +6,6 @@
 }:
 
 let
-  # Ghidra hardcodes -Dsun.java2d.uiScale=1 in support/launch.properties, which
-  # is unreadable on HiDPI. That file is in the read-only store, but the JVM
-  # applies _JAVA_OPTIONS after the command line, so it wins over the shipped
-  # value. Wrapping bin/ghidra also covers the launcher: ghidra.desktop uses a
-  # bare `Exec=ghidra`, resolved through PATH.
   ghidra-hidpi = pkgs.symlinkJoin {
     name = "ghidra-hidpi";
     paths = [ pkgs.ghidra ];
@@ -23,23 +17,19 @@ let
   };
 in
 {
-  # Package alone does nothing -- these need the module's shell integration.
   programs.fzf = {
-    fuzzyCompletion = true; # **<tab>
-    keybindings = true; # ctrl-r history, ctrl-t files, alt-c cd
+    fuzzyCompletion = true;
+    keybindings = true;
   };
   programs.direnv = {
     enable = true;
-    nix-direnv.enable = true; # caches dev shells so `cd` isn't a rebuild
+    nix-direnv.enable = true;
   };
 
-  # Modules, not packages: both need CAP_NET_RAW and install setcap wrappers so
-  # they run without sudo. trippy's binary is `trip`.
   programs.trippy.enable = true;
   programs.bandwhich.enable = true;
 
   environment.systemPackages = with pkgs; [
-    # C/C++ toolchain
     gcc
     clang
     llvm
@@ -47,7 +37,6 @@ in
     ninja
     gnumake
 
-    # Debuggers and profilers
     gdb
     lldb
     pwndbg.packages.x86_64-linux.pwndbg
@@ -55,7 +44,6 @@ in
     valgrind
     perf
 
-    # Build tools
     pkg-config
     autoconf
     automake
@@ -63,7 +51,6 @@ in
   ];
 
   users.users.armaan.packages = with pkgs; [
-    # Programming languages
     rustup
     go
     gopls
@@ -74,65 +61,54 @@ in
     python3
     uv
 
-    # Language servers and tooling
-    nil # Nix LSP
-    clang-tools # clangd, clang-format, etc.
-    ruff # Python linter
+    nil
+    clang-tools
+    ruff
 
-    # Editors
     zed-editor
 
-    # Data processing
     jq
     yq
 
-    # Benchmarking and profiling
     hyperfine
 
-    # Networking tools
-    dnsutils # dig, nslookup
+    dnsutils
     tcpdump
     wireguard-tools
 
-    # Media tools
     yt-dlp
     imagemagick
 
-    # Reverse engineering
     ghidra-hidpi
     hexyl
     imhex
-    radare2 # also provides rax2, the base/encoding converter
-    libqalculate # qalc, multi-base calculator with bitwise ops
-    heh # TUI hex editor with a multi-base byte inspector
-    binsider # TUI ELF analyzer
+    radare2
+    libqalculate
+    heh
+    binsider
 
-    # OSINT
     sherlock
 
-    # Shell & CLI
-    atuin # shell history synced across hosts
-    difftastic # structural diff -- ignores pure reindents
-    unstable.hunk # TUI diff viewer for large agent-generated changesets
-    glow # markdown in the terminal
-    gping # ping with a live graph
-    serie # git commit graph TUI
-    ouch # one command for any archive format
+    atuin
+    difftastic
+    unstable.hunk
+    glow
+    gping
+    serie
+    ouch
     procs
-    sshs # picker over ~/.ssh/config
+    sshs
     watchexec
     just
-    mprocs # several long-lived processes in one split view
-    lnav # log navigator, merges files into one timeline
-    usbutils # lsusb
+    mprocs
+    lnav
+    usbutils
 
-    # Nix workflow
-    nix-output-monitor # readable rebuild output
-    nvd # diffs two generations: what actually changed on a switch
-    nix-tree # walk the store closure
-    comma # `, <program>` runs anything in nixpkgs without installing it
+    nix-output-monitor
+    nvd
+    nix-tree
+    comma
 
-    # Formatters
     treefmt
     nixfmt
     rustfmt

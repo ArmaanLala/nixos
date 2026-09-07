@@ -1,4 +1,3 @@
-# Lenix - bare metal; Jellyfin, Immich, Paperless
 { ... }:
 
 {
@@ -18,7 +17,6 @@
     media = "arr";
   };
 
-  # Legacy BIOS — GRUB on /dev/sda, not the systemd-boot default.
   boot.loader.systemd-boot.enable = false;
   boot.loader.efi.canTouchEfiVariables = false;
   boot.loader.grub.enable = true;

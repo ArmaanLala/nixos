@@ -1,12 +1,3 @@
-# trumpet-snipes -- a static site plus a small Java job that rebuilds its
-# leaderboard JSON from the GroupMe API.
-#
-# The site itself is served from the Nix store (via staticSites). The generated
-# JSON can't live there, so this module adds a /json/ location pointing at a
-# writable dir that a systemd timer fills.
-#
-# Secret: the GroupMe token comes from sops (secrets/webster.yaml ->
-# groupme_token), rendered into an EnvironmentFile via sops.templates.
 {
   config,
   pkgs,
@@ -17,12 +8,9 @@ let
   src = inputs.site-trumpet-snipes;
   jsonDir = "/var/lib/trumpet-snipes/json";
 
-  # First day of the leaderboard period, passed to the calculator (MM-DD-YY).
-  # Bump this when a new season starts.
   leaderboardStart = "08-01-25";
   groupId = "61897280";
 
-  # com.jmschonfeld.SnipeLeaderboard, compiled from the fork's groupme-java/.
   groupme = pkgs.runCommand "trumpet-snipes-groupme" { nativeBuildInputs = [ pkgs.jdk_headless ]; } ''
     mkdir -p $out/share/classes
     cp -r ${src}/groupme-java/lib $out/share/lib
@@ -41,7 +29,6 @@ in
     source = src + "/website";
   };
 
-  # Live leaderboard JSON, overriding the committed (stale) website/json/.
   services.nginx.virtualHosts."trumpet-snipes".locations."/json/".alias = "${jsonDir}/";
 
   systemd.tmpfiles.rules = [ "d ${jsonDir} 0755 nginx nginx -" ];
@@ -67,7 +54,6 @@ in
     };
   };
 
-  # Also runnable on demand: `systemctl start trumpet-snipes-json` (scripts/trumpet).
   systemd.timers.trumpet-snipes-json = {
     wantedBy = [ "timers.target" ];
     timerConfig = {

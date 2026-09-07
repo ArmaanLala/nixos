@@ -1,5 +1,3 @@
-# Needs services/podman.nix (container backend) and the `manga` NFS share
-# (download library) imported alongside it.
 { ... }:
 
 {

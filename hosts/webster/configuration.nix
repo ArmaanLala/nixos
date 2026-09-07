@@ -1,4 +1,3 @@
-# Webster - misc web services VM
 { inputs, ... }:
 
 {
@@ -17,7 +16,6 @@
   ];
 
   nfs.shares = {
-    # copyparty the service is gone; its data isn't — keep the share mounted.
     copyparty = "copyparty";
     manga = "manga";
   };
@@ -28,7 +26,6 @@
   staticSites = {
     alpd.port = 8417;
     givememoney.port = 8418;
-    # trumpet-snipes is declared in its own module (it has a JSON updater).
     seth = {
       port = 8101;
       source = inputs.site-seth + "/website";
@@ -46,10 +43,6 @@
     openFirewall = true;
   };
 
-  # Vaultwarden does not work as the native NixOS service here, so it runs from
-  # the upstream image (podman, via oci-containers). Straight translation of the
-  # old iris.yaml compose. TLS terminates at Cloudflare; the tunnel runs on
-  # another VM and reaches this over the LAN on 11001.
   virtualisation.oci-containers.containers.vaultwarden = {
     image = "vaultwarden/server:latest";
     environment = {

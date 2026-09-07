@@ -1,15 +1,3 @@
-# Static sites served by nginx, one nginx virtual host per entry.
-#
-# Two ways to provide content:
-#   * `source` unset  -- content lives outside the repo in /var/www/<name>;
-#     nginx serves it live, so updating the site is an rsync, not a rebuild.
-#   * `source` set     -- a store path (typically `input + "/website"`) served
-#     straight from the Nix store. Updating the site is `nix flake update
-#     site-<name>` + rebuild: declarative, atomic, revertable.
-#
-# A site needing more than a plain document root (e.g. one path served from a
-# writable dir) adds to `services.nginx.virtualHosts.<name>` from its own module
-# -- nginx location sets merge.
 {
   config,
   lib,
@@ -81,8 +69,6 @@ in
           }
         ];
         locations."/".root = siteRoot site;
-        # Web roots are rsync'd or checked-out project dirs, so block dotfiles
-        # (.git, .claude).
         locations."~ /\\.".return = 404;
       }) cfg;
     };

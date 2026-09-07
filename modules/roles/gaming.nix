@@ -1,4 +1,3 @@
-# Gaming configuration - Steam, Proton, Wine, emulation and performance tools
 { pkgs, ... }:
 
 {
@@ -22,17 +21,14 @@
   ];
 
   users.users.armaan.packages = with pkgs; [
-    # Wine / Proton
     wineWow64Packages.waylandFull
     winetricks
     protonup-qt
     steamtinkerlaunch
 
-    # Launchers and mod managers
     itch
     r2modman
 
-    # Emulation
     mgba
     melonds
   ];

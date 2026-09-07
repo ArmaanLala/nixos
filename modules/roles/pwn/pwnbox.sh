@@ -1,8 +1,3 @@
-# pwnbox - manage the Ubuntu 26.04 pwn VM. NixOS is a poor host for challenge
-# binaries (stub loader, no matching libc6-dbg, shared kernel); this VM isn't.
-# It shares ~/pwn with the host over virtiofs at the same path so stack offsets
-# line up between a local run and one over ssh.
-
 VM=pwnbox
 SHARE="${PWNBOX_SHARE:-$HOME/pwn}"
 MEM="${PWNBOX_MEM:-4096}"
@@ -16,11 +11,9 @@ SEED="$IMG_DIR/$VM-seed.iso"
 CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/pwnbox"
 BASE_URL=https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img
 BASE="$CACHE/${BASE_URL##*/}"
-BACKING="$IMG_DIR/${BASE##*/}" # staged under IMG_DIR; qemu:///system can't read $HOME
+BACKING="$IMG_DIR/${BASE##*/}"
 CLOUD_INIT=@CLOUD_INIT@
 
-# ControlPath=none: a rebuilt VM reuses the DHCP address, so a persisted master
-# would serve the old machine.
 SSH_OPTS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
   -o LogLevel=ERROR -o ControlPath=none)
 
@@ -51,7 +44,6 @@ wait_for_ip() {
   return 1
 }
 
-# A lease lands seconds before sshd; the terminfo sync needs the stronger check.
 wait_for_ssh() {
   local i
   for ((i = 45; i > 0; i--)); do
@@ -88,19 +80,17 @@ cmd_create() {
   info "building cloud-init seed"
   local tmp
   tmp=$(mktemp -d)
-  trap 'rm -rf "${tmp:-}"' EXIT # EXIT not RETURN: RETURN leaks into cmd_rebuild
+  trap 'rm -rf "${tmp:-}"' EXIT
   sed "s|@SSH_PUBKEY@|$(cat "$HOME/.ssh/id_ed25519.pub")|" "$CLOUD_INIT" >"$tmp/user-data"
   printf 'instance-id: %s\nlocal-hostname: %s\n' "$VM-$(date +%s)" "$VM" >"$tmp/meta-data"
   cloud-localds "$tmp/seed.iso" "$tmp/user-data" "$tmp/meta-data"
 
   info "provisioning disk ($DISK_SIZE)"
-  # Stage the base image once; each VM is a thin overlay on it.
   [ -f "$BACKING" ] || sudo install -m 0644 "$BASE" "$BACKING"
   sudo qemu-img create -q -f qcow2 -F qcow2 -b "$BACKING" "$DISK" "$DISK_SIZE"
   sudo install -m 0644 "$tmp/seed.iso" "$SEED"
 
   info "defining domain (sharing $SHARE)"
-  # memfd + access.mode=shared is what makes virtiofs work.
   sudo virt-install \
     --connect "$URI" \
     --name "$VM" \
@@ -165,8 +155,6 @@ cmd_ssh() {
   exec ssh "${SSH_OPTS[@]}" "armaan@$ip" "$@"
 }
 
-# Ship the host's $TERM entry into the guest (Ghostty's isn't in Ubuntu's db).
-# sudo tic writes the system db, which doesn't need ~armaan to exist yet.
 sync_terminfo() {
   local ip="$1" t="${TERM:-xterm-256color}"
   wait_for_ssh "$ip" || {
@@ -183,13 +171,10 @@ sync_terminfo() {
 ssh_to() {
   local ip="$1"
   shift
-  # shellcheck disable=SC2029 # remote-side expansion is intended
-  ssh "${SSH_OPTS[@]}" "armaan@$ip" "$@"
+  exec ssh "${SSH_OPTS[@]}" "armaan@$ip" "$@"
 }
 
 cmd_sync() {
-  # -A forwards the agent for the private nvim submodule (needs ssh-add first).
-  # `env` prefix, not VAR=val: armaan's login shell is fish.
   local ip agent=() renv=()
   ip=$(ensure_ip) || exit 1
   [ "${1:-}" = "-A" ] && {
@@ -223,7 +208,7 @@ cmd_destroy() {
   }
   running && virsh -c "$URI" destroy "$VM" >/dev/null
   virsh -c "$URI" undefine "$VM" >/dev/null
-  sudo rm -f "$DISK" "$SEED" # $BACKING is shared with future creates; keep it
+  sudo rm -f "$DISK" "$SEED"
   info "destroyed"
 }
 
@@ -255,7 +240,7 @@ case "${1:-}" in
 create | start | stop | ssh | sync | console | ip | status | destroy | rebuild)
   cmd=$1
   shift
-  if [ "$cmd" = ssh ] && [ "${1:-}" = -- ]; then shift; fi # allow `pwnbox ssh -- <cmd>`
+  if [ "$cmd" = ssh ] && [ "${1:-}" = -- ]; then shift; fi
   "cmd_$cmd" "$@"
   ;;
 "" | -h | --help | help) usage ;;
