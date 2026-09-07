@@ -16,7 +16,7 @@
 }:
 let
   microbin = pkgs.microbin.overrideAttrs (_: {
-    version = "0-unstable-2026-09-06";
+    version = "2.1.4-unstable-2026-09-06";
     src = inputs.microbin-src;
     # The fork regenerated Cargo.lock wholesale, so nixpkgs' cargoHash is no use;
     # vendor straight from the lockfile instead.

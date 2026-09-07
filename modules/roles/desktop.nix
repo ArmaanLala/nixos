@@ -8,59 +8,37 @@
 }:
 
 let
-  # The same tree SDDM used to read its session list from: one derivation
-  # symlinking every services.displayManager.sessionPackages entry (currently
-  # hyprland-uwsm, niri, steam-gamescope). tuigreet otherwise only looks in
-  # /usr/share/{wayland-sessions,xsessions}, which don't exist on NixOS.
+  # Session list for tuigreet: one derivation symlinking every
+  # displayManager.sessionPackages entry (NixOS has no /usr/share/*-sessions).
   sessions = config.services.displayManager.sessionData.desktops;
 in
 {
-  # Idle handling *at the greeter*. hypridle only exists inside a logged-in
-  # compositor; tuigreet is a TUI on tty1, so the blank timer comes from the
-  # kernel instead. The kernel default is 0 (never blank). Only keyboard input
-  # resets it -- console *output* doesn't -- so tuigreet's --time clock
-  # redrawing once a second doesn't hold the screen on. fbcon passes the blank
-  # down to the DRM driver, which drops the CRTC, so the monitor generally
-  # sleeps rather than just going black. Applies to VTs only: a compositor
-  # holding DRM master never sees it.
+  # Blank the greeter's VT after 300s: hypridle only runs inside a compositor,
+  # so on tty1 the kernel console blanker handles it (default is never).
   boot.kernelParams = [ "consoleblank=300" ];
 
-  # Explicitly *not* suspend, which is the easy one to miss: IdleAction fires
-  # when every idle-capable session is idle, and greeter sessions and idle SSH
-  # logins both count -- enough to suspend the box out from under an ssh user
-  # with no desktop involved. Nothing here auto-suspends; hypridle's timers
-  # blank the displays and lock the session, and suspending stays a deliberate
-  # act (power menu, sleep key, `systemctl suspend`).
-  #
-  # logind only re-reads this on reload, which `nixos-rebuild switch` does not
-  # do -- `systemctl reload systemd-logind` after a change (reload, not
-  # restart: a restart takes the graphical session with it).
+  # Never auto-suspend: IdleAction counts greeter and idle-SSH sessions, so the
+  # default would suspend the box out from under a headless ssh user. hypridle
+  # still blanks/locks; suspend stays a deliberate act. logind only re-reads
+  # this on `systemctl reload systemd-logind` (reload, not restart).
   services.logind.settings.Login.IdleAction = "ignore";
 
-  # No services.xserver.enable: greetd runs on the TTY, so nothing needs an X
-  # server any more. XWayland is unaffected -- that's programs.hyprland.xwayland
-  # / xwayland-satellite.
-  #
-  # But services.libinput.enable *defaults* to services.xserver.enable, and its
-  # udev entry (pkgs.libinput's device quirks/hwdb) is what the Wayland
-  # compositors read too. Pin it on so dropping xserver isn't a silent input
-  # regression on the thinkpad's touchpad.
+  # libinput defaults to services.xserver.enable (now off); its udev quirks/hwdb
+  # feed the Wayland compositors too, so pin it on.
   services.libinput.enable = true;
 
   services.fwupd.enable = true;
 
-  # publish.enable/addresses are already set in common.nix; desktops add this.
+  # publish.enable/addresses come from common.nix; desktops add this.
   services.avahi.publish.userServices = true;
 
   services.greetd = {
     enable = true;
-    # Gives the unit StandardInput/TTYPath=/dev/tty1 + TTYVHangup, without which
-    # systemd's boot messages scribble over the TUI. Also creates
-    # /var/cache/tuigreet (owned by greeter), which --remember* needs to persist.
+    # Gives the unit TTYPath=/dev/tty1 + TTYVHangup (else boot messages scribble
+    # over the TUI) and creates /var/cache/tuigreet for --remember*.
     useTextGreeter = true;
     settings.default_session.command = lib.concatStringsSep " " [
-      # top-level `tuigreet`, not `greetd.tuigreet` -- the latter is a rename
-      # alias in 25.11 and warns on every eval.
+      # top-level `tuigreet`, not `greetd.tuigreet` (a 25.11 rename alias that warns)
       (lib.getExe pkgs.tuigreet)
       "--time"
       "--asterisks"
@@ -110,20 +88,14 @@ in
     nerd-fonts.ubuntu
   ];
 
-  # Module, not package: programs.hyprlock.enable also registers
-  # security.pam.services.hyprlock (without which it cannot authenticate) and
-  # pulls in services.hypridle + its systemd user unit. Bound to SUPER SHIFT L.
+  # Module (not package): also registers pam.services.hyprlock and pulls in
+  # services.hypridle. Bound to SUPER SHIFT L.
   programs.hyprlock.enable = true;
 
-  # No NixOS module for swayosd, so wire it by hand. The backend is a Type=dbus
-  # unit owning org.erikreider.swayosd on the SYSTEM bus, hence:
-  #   services.dbus.packages     -- bus policy; without it the unit dies with
-  #                                 "Request to own name refused by policy"
-  #   environment.systemPackages -- polkit reads the system profile only, never
-  #                                 per-user ones (also puts swayosd-client on
-  #                                 PATH for the media keys)
-  # graphical.target, not multi-user.target: the unit is PartOf graphical.target,
-  # which is itself After multi-user.target -- that transaction is cyclic.
+  # No NixOS module for swayosd. Backend is a system-bus dbus unit, so it needs
+  # services.dbus.packages (bus policy) and environment.systemPackages (polkit
+  # reads the system profile only). wantedBy graphical.target, not
+  # multi-user.target (PartOf graphical.target makes that transaction cyclic).
   systemd.packages = [ pkgs.swayosd ];
   services.dbus.packages = [ pkgs.swayosd ];
   systemd.services.swayosd-libinput-backend.wantedBy = [ "graphical.target" ];
@@ -138,10 +110,8 @@ in
     # bottles # temporarily disabled - patool tests failing on python 3.14
     opencode
 
-    # claude-code from the flake's own output, not nixpkgs and not its overlay:
-    # the overlay is `final.callPackage`, which rebuilds against our nixpkgs and
-    # misses the Cachix cache the no-`follows` input exists for. Matches the
-    # pwndbg pattern in dev.nix. System-wide so root gets it too.
+    # From the flake's own output, not nixpkgs/overlay: the overlay rebuilds
+    # against our nixpkgs and misses the Cachix cache. Matches pwndbg in dev.nix.
     claude-code.packages.x86_64-linux.default
   ];
 
@@ -213,8 +183,8 @@ in
     wiremix # TUI counterpart to pavucontrol
   ];
 
-  # Writes /etc/xdg/mimeapps.list. Without an entry, xdg-open picks whichever
-  # .desktop claims the type first -- which is how PNGs ended up opening in GIMP.
+  # Writes /etc/xdg/mimeapps.list; without it xdg-open picks the first .desktop
+  # claiming the type (which is how PNGs ended up in GIMP).
   xdg.mime.defaultApplications = {
     "image/png" = "org.gnome.Loupe.desktop";
     "image/jpeg" = "org.gnome.Loupe.desktop";
@@ -228,9 +198,8 @@ in
     "inode/directory" = "org.kde.dolphin.desktop";
   };
 
-  # openFirewall (port 53317, TCP+UDP) only takes effect when the module itself
-  # is enabled — the module also installs the package, so don't add it to
-  # users.users.armaan.packages as well.
+  # openFirewall (53317 TCP+UDP) also installs the package -- don't also add it
+  # to users.users.armaan.packages.
   programs.localsend = {
     enable = true;
     openFirewall = true;

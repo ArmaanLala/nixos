@@ -12,9 +12,7 @@
   boot.loader.systemd-boot.enable = lib.mkDefault true;
 
   # Cap ESP usage: systemd-boot keeps a kernel+initrd pair per generation and a
-  # small ESP fills up mid-bootloader-install (`No space left on device`, aborts
-  # the switch). The cost unit is a distinct (kernel, initrd) pair, not a
-  # distinct kernel version.
+  # small ESP fills up mid-install (aborts the switch).
   boot.loader.systemd-boot.configurationLimit = lib.mkDefault 5;
   boot.loader.efi.canTouchEfiVariables = lib.mkDefault true;
   boot.kernelPackages = lib.mkDefault pkgs.linuxPackages;
@@ -25,28 +23,18 @@
   # === Networking ===
   services.tailscale = {
     enable = true;
-    # Without this tailscaled shoves 100.100.100.100 into resolvconf at a higher
-    # priority than NetworkManager on every start/reconnect, so pihole
-    # (10.0.0.222) never wins and local DNS breaks. MagicDNS names aren't needed
-    # -- the tailnet IPs are pinned in `networking.hosts` below.
-    # extraUpFlags would be a no-op here; it only runs with an authKeyFile.
+    # Else tailscaled outranks NetworkManager's resolver and pihole never wins.
+    # Tailnet IPs are pinned in `networking.hosts`, so MagicDNS isn't needed.
     extraSetFlags = [ "--accept-dns=false" ];
   };
   networking.networkmanager.enable = true;
   networking.firewall.enable = lib.mkDefault true;
 
-  # Pin pihole ahead of whatever DHCP hands out, so DNS doesn't depend on the
-  # router advertising it. openresolv `name_servers` prepends to the dynamic
-  # list; the DHCP-provided servers still follow as fallback. No public resolver
-  # is appended on purpose -- if pihole is down DNS should fail loudly rather
-  # than quietly resolving around the ad-blocking.
-  #
-  # `networking.nameservers` is NOT the option for this: in nixpkgs it only
-  # feeds the networkd/dhcpcd paths and is never read by config/resolvconf.nix,
-  # so under NetworkManager + resolvconf it silently does nothing.
-  #
-  # mkDefault so roaming hosts can drop the pin -- 10.0.0.222 is unreachable
-  # off-LAN and would stall every fresh lookup until it times out.
+  # Pin pihole ahead of DHCP's resolvers (openresolv prepends; DHCP still
+  # follows as fallback). No public resolver on purpose -- DNS should fail loud
+  # if pihole is down rather than route around the ad-blocking.
+  # `networking.nameservers` does nothing under NetworkManager + resolvconf.
+  # mkDefault so roaming hosts can drop the pin (unreachable off-LAN).
   networking.resolvconf.extraConfig = lib.mkDefault ''
     name_servers='10.0.0.222'
   '';
@@ -121,11 +109,8 @@
   users.users.armaan = {
     isNormalUser = true;
     description = "Armaan Lala";
-    # Pinned, not auto-allocated. Without this the uid comes from
-    # /var/lib/nixos/uid-map, which is state -- so a reinstall onto an empty
-    # disk is free to hand out a different number, and every file restored from
-    # a backup with --numeric-owner then belongs to a uid that no longer exists.
-    # users.groups.armaan.gid above was already pinned for the same reason.
+    # Pinned (not from stateful /var/lib/nixos/uid-map) so a reinstall keeps the
+    # same uid and --numeric-owner backup restores line up. gid pinned likewise.
     uid = 1000;
     extraGroups = [
       "networkmanager"
@@ -145,6 +130,7 @@
       lazygit
       delta # configured in programs.git below
       neovim
+      tree-sitter # nvim-treesitter (main branch) shells out to it to build parsers
       tealdeer
       duf
       gdu
