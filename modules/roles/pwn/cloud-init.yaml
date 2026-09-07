@@ -1,23 +1,20 @@
 #cloud-config
-# Guest config for the pwn VM. @SSH_PUBKEY@ is substituted by pwnvm at create
-# time; the hostname comes from local-hostname in the seed's meta-data.
 users:
   - name: armaan
-    # uid must match the host user so files on the virtiofs share keep their
-    # ownership in both directions.
-    uid: 1000
+    uid: 1000 # match the host uid for the virtiofs share
     groups: [sudo]
     shell: /bin/bash
     sudo: "ALL=(ALL) NOPASSWD:ALL"
     lock_passwd: false
-    # console fallback login; ssh is key-only. password: pwn
     plain_text_passwd: pwn
     ssh_authorized_keys:
-      - "@SSH_PUBKEY@"
+      - "@SSH_PUBKEY@" # substituted by pwnbox at create time
 ssh_pwauth: false
 package_update: true
-# Runs before the package stage, so the i386 packages below resolve in the same
-# apt transaction rather than needing a second update+install pass.
+package_upgrade: true # so libc6:i386's version-locked dep resolves
+apt:
+  conf: |
+    Acquire::Retries "5";
 bootcmd:
   - dpkg --add-architecture i386
 packages:
@@ -37,23 +34,18 @@ packages:
   - socat
   - netcat-openbsd
   - python3-dev
-  - python3-venv
-  # pwndbg's setup.sh apt-installs this; having it here means that call is a
-  # no-op download rather than a fetch
   - python3-setuptools
+  # Python 3.14 has no pip wheels for these; the debs work.
+  - python3-pwntools
+  - python3-capstone
+  - python3-unicorn
+  - python3-ropgadget
   - ruby
   - ruby-dev
   - libc6-dbg
-  # 32-bit challenges are common enough to be worth the multiarch weight
-  - libc6:i386
-  - libc6-dbg:i386
-  - zlib1g:i386
-  # angr and pwntools ship manylinux wheels, but keep the headers so a package
-  # without one can still build rather than failing first boot
   - libssl-dev
   - libffi-dev
   - pkg-config
-  # shell environment, to match the host's
   - fish
   - eza
   - bat
@@ -63,84 +55,23 @@ packages:
   - neovim
   - ncurses-term
   - stow
-# virtiofs tags are set by pwnvm's --filesystem target.dir
 mounts:
   - [pwnshare, /home/armaan/pwn, virtiofs, "defaults,nofail", "0", "0"]
 write_files:
-  # ASLR on by default so local runs match a typical remote; flip with `aslr off`.
-  - path: /etc/sysctl.d/99-pwn-aslr.conf
-    content: |
-      kernel.randomize_va_space = 2
-  - path: /usr/local/bin/aslr
-    permissions: "0755"
-    content: |
-      #!/bin/bash
-      # aslr [on|off|status] - global ASLR toggle.
-      #
-      # You usually do NOT need this: gdb disables ASLR per-process by default,
-      # and `setarch -R ./chal` or pwntools' process(..., aslr=False) do the same
-      # via personality(ADDR_NO_RANDOMIZE) with no privilege. Use this only when
-      # you want it off for *everything*, which a container could not give you.
-      set -euo pipefail
-      case "${1:-status}" in
-        off) sudo sysctl -qw kernel.randomize_va_space=0; echo "ASLR off (0)" ;;
-        on)  sudo sysctl -qw kernel.randomize_va_space=2; echo "ASLR on (2)" ;;
-        status)
-          v=$(cat /proc/sys/kernel/randomize_va_space)
-          case "$v" in
-            0) echo "ASLR off (0)" ;;
-            1) echo "ASLR partial (1)" ;;
-            2) echo "ASLR on (2)" ;;
-          esac ;;
-        *) echo "usage: aslr [on|off|status]" >&2; exit 1 ;;
-      esac
-  # Lives in /etc/fish rather than ~/.config/fish/conf.d because the latter is a
-  # symlink into the stowed dotfiles repo, so it would follow you to the host.
-  # conf.d is read by non-interactive shells too, so the PATH below also covers
-  # `ssh pwnbox pwn cyclic 64`.
+  # Not ~/.config/fish - that's stowed from the dotfiles repo.
   - path: /etc/fish/conf.d/10-pwn.fish
     content: |
-      # fish does not read /etc/profile.d, so without this the venv never
-      # reaches a fish shell and `pwn`, `cyclic`, `asm` are all "not found".
-      # -P writes $PATH directly instead of the fish_user_paths universal
-      # variable, so nothing about this VM persists into saved fish state.
-      fish_add_path -gP /opt/pwnenv/bin /opt/glibc-all-in-one
-
-      # Start interactive logins in the challenge dir. Guarded on PWD still
-      # being $HOME so sshing to an explicit directory is left alone, and on
-      # interactive so scripts and `ssh pwnbox <cmd>` still run from $HOME.
-      # `builtin cd` skips zoxide's generated `cd`, which would otherwise
-      # record ~/pwn into the database on every single login.
-      if status is-interactive
-          and test "$PWD" = "$HOME"
-          and test -d "$HOME/pwn"
+      if status is-interactive; and test "$PWD" = "$HOME"; and test -d "$HOME/pwn"
           builtin cd "$HOME/pwn"
       end
-  # Only reached by root, `sudo -i` and bash scripts - armaan's login shell is
-  # fish, which is served by the conf.d file above.
-  - path: /etc/profile.d/pwn.sh
-    content: |
-      # pwntools et al live in a venv so we do not fight PEP 668.
-      export PATH="/opt/pwnenv/bin:/opt/glibc-all-in-one:$PATH"
-  # Readable vsyscall page - something only the VM can give you, since the host
-  # kernel is built LEGACY_VSYSCALL_XONLY.
-  #
-  # This has to be a grub.d snippet, not a sed on /etc/default/grub: cloud
-  # images ship 50-cloudimg-settings.cfg, and grub.d files are sourced *after*
-  # the main config, so it would overwrite any edit made there. 99- sorts last.
+  # grub.d, not /etc/default/grub: the cloud image overrides the latter.
   - path: /etc/default/grub.d/99-pwn.cfg
     content: |
       GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT vsyscall=emulate"
-  # pwndbg is a gdb plugin, and upstream's setup.sh only wires up ~/.gdbinit -
-  # it installs no launcher. The NixOS host has a real `pwndbg` command from
-  # nixpkgs, so provide the same entry point here rather than making the VM the
-  # odd one out.
   - path: /usr/local/bin/pwndbg
     permissions: "0755"
     content: |
       #!/bin/sh
-      # ~/.gdbinit already sources pwndbg for armaan; only load it explicitly
-      # when it would not otherwise be picked up (e.g. under sudo/root).
       if grep -q pwndbg "$HOME/.gdbinit" 2>/dev/null; then
         exec gdb "$@"
       fi
@@ -149,82 +80,42 @@ write_files:
     permissions: "0755"
     content: |
       #!/bin/bash
-      # Clone the dotfiles and stow them into $HOME. Idempotent: on rerun it
-      # pulls and restows, so `pwnvm sync` picks up host-side changes once
-      # they are pushed.
       set -euo pipefail
-      REPO=https://github.com/ArmaanLala/dotfiles.git
       DOT="$HOME/dotfiles"
-
-      # Never block on credentials. The nvim submodule is private, and without
-      # this git would sit waiting for a username and hang cloud-init.
       export GIT_TERMINAL_PROMPT=0
-
       if [ -d "$DOT/.git" ]; then
         git -C "$DOT" pull --ff-only || true
       else
-        git clone "$REPO" "$DOT"
+        git clone https://github.com/ArmaanLala/dotfiles.git "$DOT"
       fi
-
-      # .gitmodules pins git@github.com: URLs, which need a key this VM has no
-      # business holding; rewrite to https so the public ones work anonymously.
-      # This must be --global: `git submodule update` clones each submodule in a
-      # fresh git process that never reads the superproject's local config.
-      # `pwnvm sync -A` forwards an agent instead, so keep SSH URLs in that case.
+      # https instead of the ssh submodule URLs, unless `pwnbox sync -A` set an agent.
       if [ "${PWN_DOTFILES_SSH:-0}" = 1 ]; then
         git config --global --unset url."https://github.com/".insteadOf || true
       else
         git config --global url."https://github.com/".insteadOf "git@github.com:"
       fi
       git -C "$DOT" submodule update --init --recursive \
-        || echo "note: private submodules (nvim) skipped - see 'pwnvm sync -A'"
-
-      # --adopt so a pre-existing file cannot make this fail; the checkout right
-      # after discards whatever it absorbed, leaving the repo canonical and the
-      # links pointing at it.
+        || echo "note: private submodules skipped - see 'pwnbox sync -A'"
       stow -d "$DOT" -t "$HOME" --restow --adopt .
       git -C "$DOT" checkout -- . || true
-      echo "dotfiles stowed"
-  # write_files runs in the init stage, *before* users_groups creates armaan, so
-  # an owner: here fails with "Unknown user or group". defer moves this one to
-  # write_files_deferred in the final stage, after the user exists.
   - path: /home/armaan/.gdbinit
     owner: "armaan:armaan"
     permissions: "0644"
-    defer: true
+    defer: true # armaan doesn't exist yet at the write_files stage
     content: |
       source /opt/pwndbg/gdbinit.py
       set debuginfod enabled on
 runcmd:
-  # --no-cache-dir: angr and z3 alone leave a few hundred MB of wheels behind in
-  # an image that is never going to reinstall them.
-  - python3 -m venv /opt/pwnenv
-  - /opt/pwnenv/bin/pip install --no-cache-dir pwntools ROPgadget ropper capstone unicorn angr
+  - chown armaan:armaan /home/armaan # cc_mounts pre-creates it as root
+  - apt-get install -y libc6:i386 libc6-dbg:i386 zlib1g:i386
   - gem install --no-document one_gadget seccomp-tools
   - git clone --depth 1 https://github.com/pwndbg/pwndbg /opt/pwndbg
   - (cd /opt/pwndbg && ./setup.sh --update)
-  # Fetches Ubuntu glibc builds (libc + ld + debug symbols) for any version a
-  # challenge targets - this is what makes heap work tractable.
-  - git clone --depth 1 https://github.com/matrix1001/glibc-all-in-one /opt/glibc-all-in-one
-  - (cd /opt/glibc-all-in-one && ./update_list)
-  # runcmd is root, but both of these are written to as armaan: pwndbg updates
-  # venv state on startup and glibc-all-in-one downloads into its own libs/.
-  # Leaving them root-owned makes gdb fail with EACCES on first launch.
-  # /opt/pwnenv is deliberately not included - nothing writes into it at
-  # runtime, and it is by far the largest tree of the three.
-  - chown -R armaan:armaan /opt/pwndbg /opt/glibc-all-in-one
+  - chown -R armaan:armaan /opt/pwndbg
   - update-grub
-  # Ubuntu renames these to avoid conflicts; config.fish's `alias cat=bat` and
-  # the usual `fd` muscle memory both want the real names.
   - ln -sf /usr/bin/batcat /usr/local/bin/bat
   - ln -sf /usr/bin/fdfind /usr/local/bin/fd
-  # Not in apt; the prompt is worth one download (config.fish guards on it).
   - curl -fsSL https://starship.rs/install.sh | sh -s -- --yes
   - runuser -u armaan -- /usr/local/bin/pwn-dotfiles
   - chsh -s /usr/bin/fish armaan
-  # Safety net only: pwn-dotfiles already ran as armaan and .gdbinit carries an
-  # owner:, so this normally matches nothing. -xdev keeps it out of the virtiofs
-  # share, and ! -user avoids touching ctimes (and so COWing the overlay) on the
-  # ~1200 files of the dotfiles repo for no reason.
-  - find /home/armaan -xdev ! -user armaan -exec chown armaan:armaan {} +
-final_message: "pwnbox ready after $UPTIME seconds. Reboot once for vsyscall=emulate."
+final_message: "pwnbox ready. Reboot once for vsyscall=emulate."
